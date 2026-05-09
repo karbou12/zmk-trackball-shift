@@ -11,6 +11,14 @@ config ZMK_TRACKBALL_SHIFT
 
 if ZMK_TRACKBALL_SHIFT
 
+config ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD
+    int "Threshold of distance for direction detection of trackball shift"
+    default 800
+
+config ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS
+    int "Sample time [ms] for direction detection of trackball shift"
+    default 100
+
 module = TRACKBALL_SHIFT
 module-str = TRACKBALL_SHIFT
 source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"

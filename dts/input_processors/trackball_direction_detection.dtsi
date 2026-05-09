@@ -2,14 +2,14 @@
  * Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
  *
  * SPDX-License-Identifier: MIT
+ * 
+ * to allows users to configure setting using either .conf or devicetree (.dtsi/.overlay/.keymap),
+ * default value is set in Kconfing, not here.
  */
 
 / {
     /omit-if-no-ref/ zip_trackball_direction_detection: zip_trackball_direction_detection {
         compatible = "zmk,input-processor-trackball-direction-detection";
         #input-processor-cells = <0>;
-
-        distance-threshold = <800>;
-        detection-sample-time-ms = <100>;
     };
 };
