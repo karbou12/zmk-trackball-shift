@@ -18,6 +18,7 @@ LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 struct trackball_shift_config {
     uint8_t direction_angle_degree;
     uint16_t default_device_angle_degree;
+    uint16_t rotation_sample_time_ms;
 };
 
 static int trackball_shift_init(const struct device *dev) {
@@ -25,6 +26,7 @@ static int trackball_shift_init(const struct device *dev) {
 
     tb_set_direction_angle_degree(config->direction_angle_degree);
     tb_set_device_angle_degree(config->default_device_angle_degree);
+    tb_set_rotation_sample_time_ms(config->rotation_sample_time_ms);
 
     return 0;
 }
@@ -73,7 +75,8 @@ static const struct zmk_input_processor_driver_api trackball_shift_driver_api = 
 #define TRACKBALL_SHIFT_INST(n)                                                             \
     static struct trackball_shift_config trackball_shift_config_##n = {                     \
         .direction_angle_degree = DT_INST_PROP_OR(n, direction_angle_degree, 45),           \
-        .default_device_angle_degree = DT_INST_PROP_OR(n, default_device_angle_degree, 0)   \
+        .default_device_angle_degree = DT_INST_PROP_OR(n, default_device_angle_degree, 0),  \
+        .rotation_sample_time_ms = DT_INST_PROP_OR(n, rotation_sample_time_ms, 3000),       \
     };                                                                                      \
     DEVICE_DT_INST_DEFINE(n,                                                                \
                           trackball_shift_init,                                             \

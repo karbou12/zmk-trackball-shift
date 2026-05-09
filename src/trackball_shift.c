@@ -7,6 +7,7 @@
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 #include "trackball_shift.h"
+#include <dt-bindings/zmk/trackball_shift_rotation.h>
 
 LOG_MODULE_REGISTER(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
@@ -14,6 +15,7 @@ struct trackball_shift_data {
     // struct k_mutex lock;
     uint8_t direction_angle_degree;
     uint16_t device_angle_degree;
+    uint16_t rotation_sample_time_ms;
     int32_t  sin_value;
     int32_t  cos_value;
 };
@@ -21,9 +23,15 @@ struct trackball_shift_data {
 static struct trackball_shift_data tb_data = {
     .direction_angle_degree = 45,
     .device_angle_degree = 0,
+    .rotation_sample_time_ms = 3000,
     .sin_value = 0,
     .cos_value = 0,
 };
+
+static uint16_t clamp_angle_degree(const int16_t degree) {
+    const int16_t mod = degree % 360;
+    return (mod >= 0) ? mod : mod + 360;
+}
 
 static uint8_t clamp_step_angle_degree(const uint8_t step_angle_degree, const uint8_t min_angle, const uint8_t max_angle) {
     uint8_t clamped_angle = step_angle_degree;
@@ -110,6 +118,13 @@ static void get_sin_cos_value(const uint16_t degree, int32_t* sin_value, int32_t
     }
 }
 
+static void rotate_device(const bool is_cw) {
+    const uint16_t next_device_angle = is_cw ? tb_data.device_angle_degree + tb_data.direction_angle_degree
+                                             : tb_data.device_angle_degree - tb_data.direction_angle_degree;
+
+    tb_set_device_angle_degree(clamp_angle_degree(next_device_angle));
+}
+
 void tb_set_direction_angle_degree(const uint8_t direction_angle_degree) {
     tb_data.direction_angle_degree = clamp_step_angle_degree(direction_angle_degree, 3, 45);
 }
@@ -119,6 +134,10 @@ void tb_set_device_angle_degree(const uint16_t device_angle_degree) {
     get_sin_cos_value(tb_data.device_angle_degree, &tb_data.sin_value, &tb_data.cos_value);
 
     LOG_INF("[device angle:%u][sin_val:%u][cos_val:%u]", tb_data.device_angle_degree, tb_data.sin_value, tb_data.cos_value);
+}
+
+void tb_set_rotation_sample_time_ms(const uint16_t rotation_sample_time_ms) {
+    tb_data.rotation_sample_time_ms = rotation_sample_time_ms;
 }
 
 void tb_rotate_point(const int16_t raw_x, const int16_t raw_y,
@@ -133,4 +152,56 @@ void tb_rotate_point(const int16_t raw_x, const int16_t raw_y,
 
     LOG_DBG("[device rotation angle:%u] [x:y] [%d:%d] -> [%d:%d]",
             tb_data.device_angle_degree, raw_x, raw_y, *x, *y);
+}
+
+void tb_rotate_device_with_step(const uint8_t step_angle_degree, const bool is_cw) {
+    static int8_t sum_angle_degree = 0;
+    static int8_t total = 0;
+
+    static int64_t prev_time = 0;
+    int64_t curr_time = k_uptime_get();
+    const int64_t diff_time = curr_time - prev_time;
+    if ((prev_time == 0) || (diff_time > tb_data.rotation_sample_time_ms)) {
+        prev_time = curr_time;
+        sum_angle_degree = 0;
+        total = 0;
+    }
+
+    const uint8_t clamped_step_angle = clamp_step_angle_degree(step_angle_degree, 3, 45);
+    sum_angle_degree += is_cw ? clamped_step_angle : - clamped_step_angle;
+    LOG_DBG("%s %d -> %d\n", __FUNCTION__, step_angle_degree, sum_angle_degree);
+
+    bool is_rotate = false;
+    uint8_t count = 0;
+    int8_t tmp_angle_degree = sum_angle_degree;
+
+    if (sum_angle_degree > 0) {
+        while (tmp_angle_degree >= tb_data.direction_angle_degree) {
+            rotate_device(true);
+            is_rotate = true;
+            count++;
+            total++;
+            tmp_angle_degree -= tb_data.direction_angle_degree;
+            if (tmp_angle_degree < 0) {
+                tmp_angle_degree = 0;
+            }
+        }
+    } else if (sum_angle_degree < 0) {
+        while (tmp_angle_degree <= -tb_data.direction_angle_degree) {
+            rotate_device(false);
+            is_rotate = true;
+            count++;
+            total++;
+            tmp_angle_degree += tb_data.direction_angle_degree;
+            if (tmp_angle_degree > 0) {
+                tmp_angle_degree = 0;
+            }
+        }
+    }
+
+    if (is_rotate) {
+        LOG_DBG("count:%d, total:%d, remain angle:%d\n", count, total, tmp_angle_degree);
+        sum_angle_degree = tmp_angle_degree;
+        return;
+    }
 }

@@ -17,3 +17,8 @@ properties:
     description: default device angle for trackball shift. it should be devided by direction-angle-degree if it is not zero.
     type: int
     default: 0
+
+  rotation-sample-time-ms:
+    description: sample time [ms] for rotation behavior
+    type: int
+    default: 3000
