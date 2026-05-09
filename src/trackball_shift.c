@@ -6,6 +6,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
+#include <math.h>
+#ifndef M_PI
+#define M_PI 3.1415926536
+#endif
 #include "trackball_shift.h"
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
 
@@ -13,11 +17,16 @@ LOG_MODULE_REGISTER(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 struct trackball_shift_data {
     // struct k_mutex lock;
-    uint8_t direction_angle_degree;
+    uint8_t  direction_angle_degree;
     uint16_t device_angle_degree;
     uint16_t rotation_sample_time_ms;
     int32_t  sin_value;
     int32_t  cos_value;
+
+    uint16_t detection_distance_threshold;
+    uint16_t detection_sample_time_ms;
+
+    bool     is_detected;
 };
 
 static struct trackball_shift_data tb_data = {
@@ -26,6 +35,9 @@ static struct trackball_shift_data tb_data = {
     .rotation_sample_time_ms = 3000,
     .sin_value = 0,
     .cos_value = 0,
+    .detection_distance_threshold = 800,
+    .detection_sample_time_ms = 100,
+    .is_detected = false
 };
 
 static uint16_t clamp_angle_degree(const int16_t degree) {
@@ -140,8 +152,16 @@ void tb_set_rotation_sample_time_ms(const uint16_t rotation_sample_time_ms) {
     tb_data.rotation_sample_time_ms = rotation_sample_time_ms;
 }
 
+void tb_init_detection_data(const uint16_t distance_threshold, const uint16_t sample_time_ms) {
+    tb_data.detection_distance_threshold = distance_threshold;
+    tb_data.detection_sample_time_ms = sample_time_ms;
+    tb_data.is_detected = false;
+}
+
 void tb_rotate_point(const int16_t raw_x, const int16_t raw_y,
                      int16_t* x, int16_t* y) {
+    tb_data.is_detected = false;
+
     const int32_t SCALER = 32767;
 
     // when degree is 0
@@ -204,4 +224,81 @@ void tb_rotate_device_with_step(const uint8_t step_angle_degree, const bool is_c
         sum_angle_degree = tmp_angle_degree;
         return;
     }
+}
+
+void tb_detect_direction(const int16_t value, const bool is_y_value) {
+    if (tb_data.is_detected) {
+        return;
+    }
+
+    const uint32_t dir_detect_threshold = tb_data.detection_distance_threshold * tb_data.detection_distance_threshold;
+
+    static int16_t acc_x = 0;
+    static int16_t acc_y = 0;
+
+    static int64_t prev_time = 0;
+    const int64_t curr_time = k_uptime_get();
+    const int64_t diff_time = curr_time - prev_time;
+
+    if ((prev_time == 0) || (diff_time > tb_data.detection_sample_time_ms * 2)) {
+        LOG_DBG("detection begin at %lld", curr_time);
+        prev_time = curr_time;
+
+        if (is_y_value) {
+            acc_y = value;
+        } else {
+            acc_x = value;
+        }
+
+        return;
+    }
+
+    if (is_y_value) {
+        acc_y += value;
+    } else {
+        acc_x += value;
+        return;
+    }
+
+    const uint32_t distance = acc_x * acc_x + acc_y * acc_y;
+
+    if (diff_time < tb_data.detection_sample_time_ms) {
+        LOG_DBG("under detection [dst:%d %d -> %u/%u] [time:%lld - %lld = %lld/%d]",
+                acc_x, acc_y, distance, dir_detect_threshold,
+                curr_time, prev_time, diff_time, tb_data.detection_sample_time_ms);
+
+        if (distance < dir_detect_threshold) {
+            return;
+        }
+    }
+
+    const double radian = atan2(acc_y, acc_x);
+    int16_t detected_roll_up_angle = (int16_t)(radian * 180 / M_PI);
+
+    LOG_INF("timeout detection [dst:%d %d (degree:%d) -> %u/%u] [time:%lld - %lld = %lld/%d]",
+            acc_x, acc_y, detected_roll_up_angle, distance, dir_detect_threshold,
+            curr_time, prev_time, diff_time, tb_data.detection_sample_time_ms);
+
+    prev_time = 0;
+    acc_x = 0;
+    acc_y = 0;
+
+    if (distance < dir_detect_threshold) {
+        return;
+    }
+
+    const int16_t roll_up_angle_on_base = 270;
+    const int16_t device_x_axis_angle = roll_up_angle_on_base - detected_roll_up_angle;
+
+    // e.g., there is 8 directions if direction angle is 45.
+    // if detected angle is 0, it's direction index is 0, and the angle range of 0th direction is from -22.5 to 22.5.
+    // to calculate direction of the detected angle easily, shift the range from 0 to 45 by adding 45/2: detection_angle_degree / 2.
+    const int16_t shifted_angle_in_direction = device_x_axis_angle + (int16_t)(tb_data.direction_angle_degree / 2);
+    const uint16_t clamped_angle = clamp_angle_degree(shifted_angle_in_direction);
+    const uint8_t device_direction_index = (uint8_t)(clamped_angle / tb_data.direction_angle_degree);
+
+    tb_set_device_angle_degree(device_direction_index * tb_data.direction_angle_degree);
+    tb_data.is_detected = true;
+
+    return;
 }
