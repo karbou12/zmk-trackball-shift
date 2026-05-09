@@ -1,0 +1,18 @@
+# Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+# SPDX-License-Identifier: MIT
+
+config ZMK_TRACKBALL_SHIFT
+    bool
+    default y
+    depends on ZMK_POINTING
+    depends on (!ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL)
+    help
+        Enable Trackball Shift for ZMK.
+
+if ZMK_TRACKBALL_SHIFT
+
+module = TRACKBALL_SHIFT
+module-str = TRACKBALL_SHIFT
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+
+endif # ZMK_TRACKBALL_SHIFT

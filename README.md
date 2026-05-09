@@ -1,11 +1,21 @@
-# ZMK Module Template
+# ZMK Module: zmk-feature-trackball_shift
 
-This repository contains a template for a ZMK module, as it would most frequently be used. 
+A ZMK input processor module that detect a direction of trackball device, and rotate xy input.
+The module name is inspired from OctaShift of Nape Pro.
 
-## Usage
+Note: Once I created a similaor feature for Nape Origin by modifying pmw3610 driver.
+I extracted the feature as a module and improve it.
 
-Read through the [ZMK Module Creation](https://zmk.dev/docs/development/module-creation) page for details on how to configure this template.
+## Features
 
-## More Info
+- Rotates xy input coordinate by the default angle that defined in configuration file.
 
-For more info on modules, you can read through  through the [Zephyr modules page](https://docs.zephyrproject.org/3.5.0/develop/modules.html) and [ZMK's page on using modules](https://zmk.dev/docs/features/modules). [Zephyr's west manifest page](https://docs.zephyrproject.org/3.5.0/develop/west/manifest.html#west-manifests) may also be of use.
+## Configuration
+
+- input-processors
+  - trackball_shift
+    - direction-angle-degree
+      - angle of each direction for trackball shift. the range is from 3 to 45.
+    - default-device-angle-degree
+      - default device angle for trackball shift. it should be divided by direcion-angle-degree if it is not zero.
+ 
