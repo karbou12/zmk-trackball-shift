@@ -8,3 +8,11 @@ config ZMK_TRACKBALL_SHIFT
     depends on (!ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL)
     help
         Enable Trackball Shift for ZMK.
+
+if ZMK_TRACKBALL_SHIFT
+
+module = TRACKBALL_SHIFT
+module-str = TRACKBALL_SHIFT
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
+
+endif # ZMK_TRACKBALL_SHIFT
