@@ -1,0 +1,15 @@
+/*
+ * Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/ {
+    /omit-if-no-ref/ zip_trackball_direction_detection: zip_trackball_direction_detection {
+        compatible = "zmk,input-processor-trackball-direction-detection";
+        #input-processor-cells = <0>;
+
+        distance-threshold = <800>;
+        detection-sample-time-ms = <100>;
+    };
+};

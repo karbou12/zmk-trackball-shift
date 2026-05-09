@@ -10,6 +10,7 @@ I extracted the feature as a module and improve it.
 
 - Rotates xy input coordinate by the default angle that defined in configuration file.
 - Supports CW/CCW rotation of the coordinate by key press and rotary encoder. A rotation angle is configurable.
+- Detects a direction of trackball device by rolling a trackball from down to up on a detection layer. It is reset on disconnect of the device.
 
 ## Configuration
 
@@ -25,6 +26,14 @@ I extracted the feature as a module and improve it.
       - sample time for rotation by a rotary encoder.
       - default value is 3000.
  
+  - trackball_direction_detection
+    - distance-threshold
+      - threshold of distance for direction detection of trackball shift.
+      - devault value is 800.
+    - detection-sample-time-ms
+      - sample time [ms] for direction detection of trackball shift.
+      - default value is 100.
+
 - behavior
   - trackball_shift_rotation
     - step-angle-degree
