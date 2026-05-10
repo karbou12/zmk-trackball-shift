@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/zmk/behaviors.h>
+
+/ {
+    behaviors {
+#if ZMK_BEHAVIOR_OMIT(TB_DD)
+        /omit-if-no-ref/
+#endif
+        tb_dd: tb_dd {
+            compatible = "zmk,behavior-trackball-direction-detection";
+            #binding-cells = <0>;
+            display-name = "Trackball Shift direction detection";
+        };
+    };
+};

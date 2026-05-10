@@ -1,5 +1,8 @@
 # Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
 # SPDX-License-Identifier: MIT
+#
+# to allows users to configure setting using either .conf or devicetree (.dtsi/.overlay/.keymap),
+# default value is set in Kconfing, not here.
 
 description: Input Processor for detecion the direction of trackball device
 
@@ -11,9 +14,7 @@ properties:
   distance-threshold:
     description: threshold of distance for direction detection of trackball shift.
     type: int
-    default: 800
 
   detection-sample-time-ms:
     description: sample time [ms] for direction detection of trackball shift.
     type: int
-    default: 100

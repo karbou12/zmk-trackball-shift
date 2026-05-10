@@ -16,7 +16,7 @@
 LOG_MODULE_REGISTER(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 struct trackball_shift_data {
-    // struct k_mutex lock;
+    struct k_mutex lock;
     uint8_t  direction_angle_degree;
     uint16_t device_angle_degree;
     uint16_t rotation_sample_time_ms;
@@ -27,6 +27,7 @@ struct trackball_shift_data {
     uint16_t detection_sample_time_ms;
 
     bool     is_detected;
+    bool     is_detection_active;
 };
 
 static struct trackball_shift_data tb_data = {
@@ -35,9 +36,10 @@ static struct trackball_shift_data tb_data = {
     .rotation_sample_time_ms = 3000,
     .sin_value = 0,
     .cos_value = 0,
-    .detection_distance_threshold = 800,
-    .detection_sample_time_ms = 100,
-    .is_detected = false
+    .detection_distance_threshold = CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD,
+    .detection_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS,
+    .is_detected = false,
+    .is_detection_active = false,
 };
 
 static uint16_t clamp_angle_degree(const int16_t degree) {
@@ -153,10 +155,29 @@ void tb_set_rotation_sample_time_ms(const uint16_t rotation_sample_time_ms) {
 }
 
 void tb_init_detection_data(const uint16_t distance_threshold, const uint16_t sample_time_ms) {
+    LOG_INF("%s [distance threshold:%u][smpl time:%u]", __FUNCTION__, distance_threshold, sample_time_ms);
+
+    k_mutex_init(&tb_data.lock);
     tb_data.detection_distance_threshold = distance_threshold;
     tb_data.detection_sample_time_ms = sample_time_ms;
-    tb_data.is_detected = false;
 }
+
+void tb_set_direction_detection_active(const bool is_active) {
+    if (k_mutex_lock(&tb_data.lock, K_FOREVER) == 0) {
+        tb_data.is_detection_active = is_active;
+        k_mutex_unlock(&tb_data.lock);
+    }
+}
+
+bool tb_is_direction_detection_active() {
+    bool is_active = false;
+    if (k_mutex_lock(&tb_data.lock, K_FOREVER) == 0) {
+        is_active = tb_data.is_detection_active;
+        k_mutex_unlock(&tb_data.lock);
+    }
+    return is_active;
+}
+
 
 void tb_rotate_point(const int16_t raw_x, const int16_t raw_y,
                      int16_t* x, int16_t* y) {

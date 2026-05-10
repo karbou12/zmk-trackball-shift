@@ -12,6 +12,7 @@ if(CONFIG_ZMK_TRACKBALL_SHIFT)
         zephyr_library_sources(
             src/trackball_shift.c
             src/behaviors/behavior_trackball_shift_rotation.c
+            src/behaviors/behavior_trackball_direction_detection.c
             src/input_processors/input_processors_trackball_shift.c
             src/input_processors/input_processors_trackball_direction_detection.c
         )
