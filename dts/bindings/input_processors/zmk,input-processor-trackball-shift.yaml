@@ -8,17 +8,9 @@ compatible: "zmk,input-processor-trackball-shift"
 include: ip_zero_param.yaml
 
 properties:
-  direction-angle-degree:
-    description: angle of each direction for trackball shift. the range is from 3 to 45.
-    type: int
-    default: 45
-
   default-device-angle-degree:
-    description: default device angle for trackball shift. it should be devided by direction-angle-degree if it is not zero.
+    description: |
+      default device angle [deg] for trackball shift.
+      if non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
     type: int
     default: 0
-
-  rotation-sample-time-ms:
-    description: sample time [ms] for rotation behavior
-    type: int
-    default: 3000

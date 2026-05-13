@@ -19,7 +19,7 @@ struct trackball_shift_data {
     struct k_mutex lock;
     uint8_t  direction_angle_degree;
     uint16_t device_angle_degree;
-    uint16_t rotation_sample_time_ms;
+    const uint16_t rotation_sample_time_ms;
     int32_t  sin_value;
     int32_t  cos_value;
 
@@ -31,9 +31,9 @@ struct trackball_shift_data {
 };
 
 static struct trackball_shift_data tb_data = {
-    .direction_angle_degree = 45,
+    .direction_angle_degree = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG,
     .device_angle_degree = 0,
-    .rotation_sample_time_ms = 3000,
+    .rotation_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS,
     .sin_value = 0,
     .cos_value = 0,
     .detection_distance_threshold = CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD,
@@ -90,6 +90,16 @@ static uint16_t clamp_device_angle_degree(const uint16_t device_angle_degree, co
     return clamped_angle;
 }
 
+static void init_tb_data() {
+    static bool is_init = false;
+    if (is_init) {
+        return;
+    }
+    is_init = true;
+
+    tb_data.direction_angle_degree = clamp_step_angle_degree(tb_data.direction_angle_degree, 3, 45);
+}
+
 static void get_sin_cos_value(const uint16_t degree, int32_t* sin_value, int32_t* cos_value) {
     // normalize sin table with int16_t max
     static const int32_t sin_tbl[] = {
@@ -139,23 +149,19 @@ static void rotate_device(const bool is_cw) {
     tb_set_device_angle_degree(clamp_angle_degree(next_device_angle));
 }
 
-void tb_set_direction_angle_degree(const uint8_t direction_angle_degree) {
-    tb_data.direction_angle_degree = clamp_step_angle_degree(direction_angle_degree, 3, 45);
-}
-
 void tb_set_device_angle_degree(const uint16_t device_angle_degree) {
+    init_tb_data();
+
     tb_data.device_angle_degree = clamp_device_angle_degree(device_angle_degree, tb_data.direction_angle_degree);
     get_sin_cos_value(tb_data.device_angle_degree, &tb_data.sin_value, &tb_data.cos_value);
 
     LOG_INF("[device angle:%u][sin_val:%u][cos_val:%u]", tb_data.device_angle_degree, tb_data.sin_value, tb_data.cos_value);
 }
 
-void tb_set_rotation_sample_time_ms(const uint16_t rotation_sample_time_ms) {
-    tb_data.rotation_sample_time_ms = rotation_sample_time_ms;
-}
-
 void tb_init_detection_data(const uint16_t distance_threshold, const uint16_t sample_time_ms) {
     LOG_INF("%s [distance threshold:%u][smpl time:%u]", __FUNCTION__, distance_threshold, sample_time_ms);
+
+    init_tb_data();
 
     k_mutex_init(&tb_data.lock);
     tb_data.detection_distance_threshold = distance_threshold;
