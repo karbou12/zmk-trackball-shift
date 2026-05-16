@@ -37,7 +37,7 @@ I extracted the feature as a module and improve it.
 
 - `xmk,input-processor-trackball-shift`
   - properties in dtsi
-    - default-device-angle-degree
+    - default-device-angle-deg
       - Default device angle [deg] for trackball shift.
       - If non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
       - Default value is 0.
@@ -48,11 +48,11 @@ I extracted the feature as a module and improve it.
 
 - `zmk,behavior-trackball-shift-rotation`
   - properties in dtsi
-    - step-angle-degree
+    - step-angle-deg
       - the step of the rotation angle of the device, the range is from 3 to 45.
       - it considers multible input by a rotary encoder.
-        if the step is less than direction-angle-degree of trackball_shift input-processors,
-        it rotate angle with direction-angle-degree when total step is greater than direction-angle-degree within rotation-sample-time-ms.
+        if the step is less than direction-angle-deg of trackball_shift input-processors,
+        it rotate angle with direction-angle-deg when total step is greater than direction-angle-deg within rotation-sample-time-ms.
       - default value is 45.
   - param1 in keymap
     - TB_ROT_CW : rotate clockwise

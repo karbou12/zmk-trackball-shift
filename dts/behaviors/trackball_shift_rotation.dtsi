@@ -15,8 +15,8 @@
         tb_rot_45: tr45 {
             compatible = "zmk,behavior-trackball-shift-rotation";
             #binding-cells = <1>;
-            step-angle-degree = <45>;
-            display-name = "Trackball Shift Rotation with 45 degree";
+            step-angle-deg = <45>;
+            display-name = "Trackball Shift Rotation with 45 [deg]";
         };
 
 #if ZMK_BEHAVIOR_OMIT(ENC_TB_ROT_45)

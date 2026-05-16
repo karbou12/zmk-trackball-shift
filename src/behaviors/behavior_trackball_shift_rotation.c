@@ -46,7 +46,7 @@ static const struct behavior_parameter_metadata metadata = {
 #endif // IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
 
 struct behavior_trackball_shift_rotation_config {
-    uint8_t step_angle_degree;
+    uint8_t step_angle_deg;
 };
 
 static int behavior_trackball_shift_rotation_init(const struct device *dev) {
@@ -63,12 +63,12 @@ static int on_trackball_shift_rotation_binding_pressed(struct zmk_behavior_bindi
     switch (binding->param1) {
         case TB_ROT_CW:
             LOG_INF("ROT_CW");
-            tb_rotate_device_with_step(config->step_angle_degree, true);
+            tb_rotate_device_with_step(config->step_angle_deg, true);
             return ZMK_BEHAVIOR_OPAQUE;
 
         case TB_ROT_CCW:
             LOG_INF("ROT_CCW");
-            tb_rotate_device_with_step(config->step_angle_degree, false);
+            tb_rotate_device_with_step(config->step_angle_deg, false);
             return ZMK_BEHAVIOR_OPAQUE;
 
         default:
@@ -96,7 +96,7 @@ static const struct behavior_driver_api trackball_shift_rotation_driver_api = {
 #define TRACKBALL_SHIFT_ROT_INST(n)                                             \
     static const struct behavior_trackball_shift_rotation_config                \
         behavior_trackball_shift_rotation_config_##n = {                        \
-        .step_angle_degree = DT_INST_PROP_OR(n, step_angle_degree, 45),         \
+        .step_angle_deg = DT_INST_PROP_OR(n, step_angle_deg, 45),               \
     };                                                                          \
     BEHAVIOR_DT_INST_DEFINE(n,                                                  \
                             &behavior_trackball_shift_rotation_init,            \

@@ -16,7 +16,7 @@ LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 struct trackball_shift_config {
-    uint16_t default_device_angle_degree;
+    uint16_t default_device_angle_deg;
 };
 
 static int trackball_shift_init(const struct device *dev) {
@@ -24,7 +24,7 @@ static int trackball_shift_init(const struct device *dev) {
 
     struct trackball_shift_config *config = (struct trackball_shift_config *)dev->config;
 
-    tb_set_device_angle_degree(config->default_device_angle_degree);
+    tb_set_device_angle_deg(config->default_device_angle_deg);
 
     return 0;
 }
@@ -86,7 +86,7 @@ static const struct zmk_input_processor_driver_api trackball_shift_driver_api = 
 
 #define TRACKBALL_SHIFT_INST(n)                                                             \
     static struct trackball_shift_config trackball_shift_config_##n = {                     \
-        .default_device_angle_degree = DT_INST_PROP_OR(n, default_device_angle_degree, 0),  \
+        .default_device_angle_deg = DT_INST_PROP_OR(n, default_device_angle_deg, 0),  \
     };                                                                                      \
     DEVICE_DT_INST_DEFINE(n,                                                                \
                           trackball_shift_init,                                             \
