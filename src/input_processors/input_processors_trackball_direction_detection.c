@@ -15,14 +15,9 @@ LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
-struct trackball_direction_detection_config {
-    uint16_t distance_threshold;
-    uint16_t detection_sample_time_ms;
-};
-
 static int trackball_direction_detection_init(const struct device *dev) {
-    struct trackball_direction_detection_config *config = (struct trackball_direction_detection_config *)dev->config;
-    tb_init_detection_data(config->distance_threshold, config->detection_sample_time_ms);
+    ARG_UNUSED(dev);
+    tb_init();
 
     return 0;
 }
@@ -60,20 +55,11 @@ static const struct zmk_input_processor_driver_api trackball_direction_detection
 };
 
 #define TRACKBALL_DIRECTION_DETECTION_INST(n)                                     \
-    static struct trackball_direction_detection_config                            \
-        trackball_direction_detection_config_##n = {                              \
-        .distance_threshold =                                                     \
-            DT_INST_PROP_OR(n, distance_threshold,                                \
-                            CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD),       \
-        .detection_sample_time_ms =                                               \
-            DT_INST_PROP_OR(n, detection_sample_time_ms,                          \
-                            CONFIG_ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS), \
-    };                                                                            \
     DEVICE_DT_INST_DEFINE(n,                                                      \
                           trackball_direction_detection_init,                     \
                           NULL,                                                   \
                           NULL,                                                   \
-                          &trackball_direction_detection_config_##n,              \
+                          NULL,                                                   \
                           POST_KERNEL,                                            \
                           CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,                    \
                           &trackball_direction_detection_driver_api);

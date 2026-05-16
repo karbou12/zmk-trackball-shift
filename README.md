@@ -62,23 +62,21 @@ I extracted the feature as a module and improve it.
 
 #### Kconfig
 
-- CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD
-  - threshold of distance for direction detection of trackball shift.
-  - devault value is 800.
-- CONFIG_ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS
-  - sample time [ms] for direction detection of trackball shift.
-  - default value is 100.
+- CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD
+  - Distance threshold for trackball shift direction detection.
+  - Defines the minimum distance required to detect a valid change in direction.
+  - Devault value is 800.
+
+- CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS
+  - Sample time [ms] for trackball shift direction detection.
+  - If the trackball's movement distance exceeds direction_distance_threshold within this sample time, the direction is determined.
+  - If the threshold is not exceeded within this time, the accumulated distance is reset.
+  - Default value is 100.
 
 #### input_processors
 
 - `zmk,input-processor-trackball-direction-detection`
-  - properties in dtsi
-    - distance-threshold
-      - the purpose is same with CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD.
-      - if both of properties and conf are set, properties is used.
-    - detection-sample-time-ms
-      - the purpose is same with CONFIG_ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS.
-      - if both of properties and conf are set, properties is used.
+  - no properties
 
 #### behavior
 

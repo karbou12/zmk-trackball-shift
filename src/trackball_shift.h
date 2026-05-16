@@ -5,8 +5,8 @@
  */
 #pragma once
 
+extern void tb_init();
 extern void tb_set_device_angle_degree(const uint16_t device_angle_degree);
-extern void tb_init_detection_data(const uint16_t distance_threshold, const uint16_t sample_time_ms);
 extern void tb_set_direction_detection_active(const bool is_active);
 extern bool tb_is_direction_detection_active();
 

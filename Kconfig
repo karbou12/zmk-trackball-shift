@@ -28,13 +28,19 @@ config ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS
         Once the accumulated angle exceeds direction_angle_deg, the system triggers a rotation of direction_angle_deg.
         If the threshold is not exceeded within this time, the accumulated steps are reset.
 
-config ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD
-    int "Threshold of distance for direction detection of trackball shift"
+config ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD
+    int "Distance threshold for trackball shift direction detection."
     default 800
+    help
+        Defines the minimum distance required to detect a valid change in direction.
 
-config ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS
-    int "Sample time [ms] for direction detection of trackball shift"
+config ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS
+    int "Sample time [ms] for trackball shift direction detection."
     default 100
+    help
+        If the trackball's movement distance exceeds direction_distance_threshold within this sample time, the direction is determined.
+        If the threshold is not exceeded within this time, the accumulated distance is reset.
+    
 
 module = TRACKBALL_SHIFT
 module-str = TRACKBALL_SHIFT
