@@ -11,13 +11,36 @@ config ZMK_TRACKBALL_SHIFT
 
 if ZMK_TRACKBALL_SHIFT
 
-config ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD
-    int "Threshold of distance for direction detection of trackball shift"
-    default 800
+config ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG
+    int "Angle [deg] of each direction for trackball shift."
+    default 45
+    range 3 45
+    help
+        This value must be a divisor of 360.
 
-config ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS
-    int "Sample time [ms] for direction detection of trackball shift"
+config ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS
+    int "Sample time [ms] for rotation behavior."
+    default 3000
+    help
+        Used for handling multiple inputs from a rotary encoder.
+        If the encoder's step angle is smaller than direction_angle_deg,
+        steps are accumulated within the sample time.
+        Once the accumulated angle exceeds direction_angle_deg, the system triggers a rotation of direction_angle_deg.
+        If the threshold is not exceeded within this time, the accumulated steps are reset.
+
+config ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD
+    int "Distance threshold for trackball shift direction detection."
+    default 800
+    help
+        Defines the minimum distance required to detect a valid change in direction.
+
+config ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS
+    int "Sample time [ms] for trackball shift direction detection."
     default 100
+    help
+        If the trackball's movement distance exceeds direction_distance_threshold within this sample time, the direction is determined.
+        If the threshold is not exceeded within this time, the accumulated distance is reset.
+    
 
 module = TRACKBALL_SHIFT
 module-str = TRACKBALL_SHIFT

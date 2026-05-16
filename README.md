@@ -16,19 +16,31 @@ I extracted the feature as a module and improve it.
 
 ### trackball-shift
 
+#### Kconfig
+
+- CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG
+  - Angle [deg] of each direction for trackball shift.
+  - It must be a dvisor of 360.
+  - It must be between 3 and 45.
+  - Default value is 45.
+
+- CONFIG_ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS
+  - Sample time [ms] for rotation behavior.
+  - Used for handling multiple inputs from a rotary encoder.
+  - If the encoder's step angle is smaller than direction_angle_deg,
+    steps are accumulated within the sample time.
+  - Once the accumulated angle exceeds direction_angle_deg, the system triggers a rotation of direction_angle_deg.
+  - If the threshold is not exceeded within this time, the accumulated steps are reset.
+  - Default value is 3000.
+
 ####  input-processors
 
 - `xmk,input-processor-trackball-shift`
   - properties in dtsi
-    - direction-angle-degree
-      - angle of each direction for trackball shift. the range is from 3 to 45.
-      - default value is 45.
     - default-device-angle-degree
-      - default device angle for trackball shift. it should be divided by direcion-angle-degree if it is not zero.
-      - default value is 45.
-    - rotation-sample-time-ms
-      - sample time for rotation by a rotary encoder.
-      - default value is 3000.
+      - Default device angle [deg] for trackball shift.
+      - If non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
+      - Default value is 0.
  
 ### trackball-shift-rotation
 
@@ -50,23 +62,21 @@ I extracted the feature as a module and improve it.
 
 #### Kconfig
 
-- CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD
-  - threshold of distance for direction detection of trackball shift.
-  - devault value is 800.
-- CONFIG_ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS
-  - sample time [ms] for direction detection of trackball shift.
-  - default value is 100.
+- CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD
+  - Distance threshold for trackball shift direction detection.
+  - Defines the minimum distance required to detect a valid change in direction.
+  - Devault value is 800.
+
+- CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS
+  - Sample time [ms] for trackball shift direction detection.
+  - If the trackball's movement distance exceeds direction_distance_threshold within this sample time, the direction is determined.
+  - If the threshold is not exceeded within this time, the accumulated distance is reset.
+  - Default value is 100.
 
 #### input_processors
 
 - `zmk,input-processor-trackball-direction-detection`
-  - properties in dtsi
-    - distance-threshold
-      - the purpose is same with CONFIG_ZMK_TRACKBALL_SHIFT_DISTANCE_THRESHOLD.
-      - if both of properties and conf are set, properties is used.
-    - detection-sample-time-ms
-      - the purpose is same with CONFIG_ZMK_TRACKBALL_SHIFT_DETECTION_SAMPLE_TIME_MS.
-      - if both of properties and conf are set, properties is used.
+  - no properties
 
 #### behavior
 

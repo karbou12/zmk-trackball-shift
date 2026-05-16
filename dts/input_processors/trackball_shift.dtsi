@@ -9,8 +9,6 @@
         compatible = "zmk,input-processor-trackball-shift";
         #input-processor-cells = <0>;
 
-        direction-angle-degree = <45>;
         default-device-angle-degree = <0>;
-        rotation-sample-time-ms = <3000>;
     };
 };
