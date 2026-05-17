@@ -288,10 +288,10 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     }
 
     const double radian = atan2(acc_y, acc_x);
-    int16_t detected_roll_up_angle = (int16_t)(radian * 180 / M_PI);
+    int16_t roll_forward_angle = (int16_t)(radian * 180 / M_PI);
 
     LOG_INF("timeout detection [dst:%d %d (deg:%d) -> %u/%u] [time:%lld - %lld = %lld/%d]",
-            acc_x, acc_y, detected_roll_up_angle, distance, tb_data.direction_squared_distance_threshold,
+            acc_x, acc_y, roll_forward_angle, distance, tb_data.direction_squared_distance_threshold,
             curr_time, prev_time, diff_time, tb_data.direction_sample_time_ms);
 
     prev_time = 0;
@@ -303,7 +303,7 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     }
 
     const int16_t roll_up_angle_on_base = 270;
-    const int16_t device_x_axis_angle = roll_up_angle_on_base - detected_roll_up_angle;
+    const int16_t device_x_axis_angle = roll_up_angle_on_base - roll_forward_angle;
 
     // e.g., there is 8 directions if direction angle is 45.
     // if detected angle is 0, it's direction index is 0, and the angle range of 0th direction is from -22.5 to 22.5.
