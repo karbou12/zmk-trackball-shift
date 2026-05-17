@@ -37,7 +37,7 @@ I extracted the feature as a module and improve it.
 
 - `xmk,input-processor-trackball-shift`
   - properties in dtsi
-    - default-device-angle-degree
+    - default-device-angle-deg
       - Default device angle [deg] for trackball shift.
       - If non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
       - Default value is 0.
@@ -48,7 +48,7 @@ I extracted the feature as a module and improve it.
 
 - `zmk,behavior-trackball-shift-rotation`
   - properties in dtsi
-    - step-angle-degree
+    - step-angle-deg
       - Step angle [deg] of the rotation.
       - Defines the angle rotated per single key press or single encoder step (pulse).
       - If this value is smaller than direction_angle_degree,

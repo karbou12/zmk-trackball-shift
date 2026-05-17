@@ -8,7 +8,7 @@ compatible: "zmk,behavior-trackball-shift-rotation"
 include: one_param.yaml
 
 properties:
-  step-angle-degree:
+  step-angle-deg:
     description: |
       Step angle [deg] of the rotation.
       Defines the angle rotated per single key press or single encoder step (pulse).

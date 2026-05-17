@@ -8,7 +8,7 @@ compatible: "zmk,input-processor-trackball-shift"
 include: ip_zero_param.yaml
 
 properties:
-  default-device-angle-degree:
+  default-device-angle-deg:
     description: |
       default device angle [deg] for trackball shift.
       if non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
