@@ -302,8 +302,8 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
         return;
     }
 
-    const int16_t roll_up_angle_on_base = 270;
-    const int16_t device_x_axis_angle = roll_up_angle_on_base - roll_forward_angle;
+    const int16_t roll_forward_angle_base = 270;
+    const int16_t device_x_axis_angle = roll_forward_angle_base - roll_forward_angle;
 
     // e.g., there is 8 directions if direction angle is 45.
     // if detected angle is 0, it's direction index is 0, and the angle range of 0th direction is from -22.5 to 22.5.
