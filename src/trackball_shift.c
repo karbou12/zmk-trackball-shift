@@ -10,6 +10,7 @@
 #ifndef M_PI
 #define M_PI 3.1415926536
 #endif
+#include <drivers/input_processor.h>
 #include "trackball_shift.h"
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
 
@@ -175,20 +176,37 @@ bool tb_is_direction_detection_active() {
 }
 
 
-void tb_rotate_point(const int16_t raw_x, const int16_t raw_y,
-                     int16_t* x, int16_t* y) {
+int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value) {
     tb_data.is_detected = false;
+
+    if (type != INPUT_EV_REL || (code != INPUT_REL_X && code != INPUT_REL_Y)) {
+        return ZMK_INPUT_PROC_CONTINUE;
+    }
+
+    static int16_t raw_x = 0;
+    static int16_t raw_y = 0;
+
+    const bool is_x_value = (code == INPUT_REL_X);
+    if (is_x_value) {
+        raw_x = (int16_t)(*value);
+    } else {
+        raw_y = (int16_t)(*value);
+    }
 
     const int32_t SCALER = 32767;
 
     // when angle is 0
     // x' = x cos - y sin
     // y' = x sin + y cos
-    *x = (int16_t)((raw_x * tb_data.cos_value - raw_y * tb_data.sin_value) / SCALER);
-    *y = (int16_t)((raw_x * tb_data.sin_value + raw_y * tb_data.cos_value) / SCALER);
+    int16_t x = (int16_t)((raw_x * tb_data.cos_value - raw_y * tb_data.sin_value) / SCALER);;
+    int16_t y = (int16_t)((raw_x * tb_data.sin_value + raw_y * tb_data.cos_value) / SCALER);;
 
     LOG_DBG("[device rotation angle:%u] [x:y] [%d:%d] -> [%d:%d]",
-            tb_data.device_angle_deg, raw_x, raw_y, *x, *y);
+            tb_data.device_angle_deg, raw_x, raw_y, x, y);
+
+    *value = is_x_value ? x : y;
+
+    return ZMK_INPUT_PROC_CONTINUE;
 }
 
 void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) {
@@ -222,10 +240,19 @@ void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) 
     LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
 }
 
-void tb_detect_direction(const int16_t value, const bool is_y_value) {
+int tb_detect_direction(const uint8_t type, const uint16_t code, int32_t* value) {
+    const int16_t raw_value = (int16_t)(*value);
+    *value = 0;
+
     if (tb_data.is_detected) {
-        return;
+        return ZMK_INPUT_PROC_CONTINUE;
     }
+
+    if (type != INPUT_EV_REL || (code != INPUT_REL_X && code != INPUT_REL_Y)) {
+        return ZMK_INPUT_PROC_CONTINUE;
+    }
+
+    const bool is_y_value = (code == INPUT_REL_Y);
 
     static int16_t acc_x = 0;
     static int16_t acc_y = 0;
@@ -234,24 +261,24 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     const int64_t curr_time = k_uptime_get();
     const int64_t diff_time = curr_time - prev_time;
 
-    if ((prev_time == 0) || (diff_time > tb_data.direction_sample_time_ms * 2)) {
+    if ((prev_time == 0) || (diff_time > tb_data.direction_sample_time_ms)) {
         LOG_DBG("detection begin at %lld", curr_time);
         prev_time = curr_time;
 
         if (is_y_value) {
-            acc_y = value;
+            acc_y = raw_value;
         } else {
-            acc_x = value;
+            acc_x = raw_value;
         }
 
-        return;
+        return ZMK_INPUT_PROC_CONTINUE;
     }
 
     if (is_y_value) {
-        acc_y += value;
+        acc_y += raw_value;
     } else {
-        acc_x += value;
-        return;
+        acc_x += raw_value;
+        return ZMK_INPUT_PROC_CONTINUE;
     }
 
     const uint32_t distance = acc_x * acc_x + acc_y * acc_y;
@@ -262,14 +289,15 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
                 curr_time, prev_time, diff_time, tb_data.direction_sample_time_ms);
 
         if (distance < tb_data.direction_squared_distance_threshold) {
-            return;
+            return ZMK_INPUT_PROC_CONTINUE;
         }
     }
 
     const double radian = atan2(acc_y, acc_x);
     int16_t roll_forward_angle = (int16_t)(radian * 180 / M_PI);
 
-    LOG_INF("timeout detection [dst:%d %d (deg:%d) -> %u/%u] [time:%lld - %lld = %lld/%d]",
+    LOG_INF("%s [dst:%d %d (deg:%d) -> %u/%u] [time:%lld - %lld = %lld/%d]",
+            (distance > tb_data.direction_squared_distance_threshold) ? "detected !" : "not detected",
             acc_x, acc_y, roll_forward_angle, distance, tb_data.direction_squared_distance_threshold,
             curr_time, prev_time, diff_time, tb_data.direction_sample_time_ms);
 
@@ -278,7 +306,7 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     acc_y = 0;
 
     if (distance < tb_data.direction_squared_distance_threshold) {
-        return;
+        return ZMK_INPUT_PROC_CONTINUE;
     }
 
     const int16_t roll_forward_angle_base = 270;
@@ -294,5 +322,5 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     tb_set_device_angle_deg(device_direction_index * tb_data.direction_angle_deg);
     tb_data.is_detected = true;
 
-    return;
+    return ZMK_INPUT_PROC_CONTINUE;
 }
