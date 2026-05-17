@@ -306,8 +306,8 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     const int16_t device_x_axis_angle = roll_forward_angle_base - roll_forward_angle;
 
     // e.g., there is 8 directions if direction angle is 45.
-    // if detected angle is 0, it's direction index is 0, and the angle range of 0th direction is from -22.5 to 22.5.
-    // to calculate direction of the detected angle easily, shift the range from 0 to 45 by adding 45/2: direction_angle_deg / 2.
+    // if detected angle is 0, it's direction index is 0, and the angle range of 0th direction is between -22.5 and 22.5.
+    // to calculate direction of the detected angle easily, shift the range between 0 and 45 by adding 45/2: direction_angle_deg / 2.
     const int16_t shifted_angle_in_direction = device_x_axis_angle + (int16_t)(tb_data.direction_angle_deg / 2);
     const uint16_t clamped_angle = clamp_angle_deg(shifted_angle_in_direction);
     const uint8_t device_direction_index = (uint8_t)(clamped_angle / tb_data.direction_angle_deg);
