@@ -193,54 +193,33 @@ void tb_rotate_point(const int16_t raw_x, const int16_t raw_y,
 
 void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) {
     static int8_t acc_angle_deg = 0;
-    static int8_t total = 0;
 
     static int64_t prev_time = 0;
     int64_t curr_time = k_uptime_get();
     const int64_t diff_time = curr_time - prev_time;
     if ((prev_time == 0) || (diff_time > tb_data.rotation_sample_time_ms)) {
+        LOG_DBG("%s: clear acc", __FUNCTION__);
         prev_time = curr_time;
         acc_angle_deg = 0;
-        total = 0;
     }
 
     const uint8_t clamped_step_angle = clamp_step_angle_deg(step_angle_deg, 3, 45);
     acc_angle_deg += is_cw ? clamped_step_angle : - clamped_step_angle;
-    LOG_DBG("%s %d -> %d\n", __FUNCTION__, step_angle_deg, acc_angle_deg);
+    LOG_DBG("%s: step:%d -> acc:%d/%u", __FUNCTION__, step_angle_deg, acc_angle_deg, tb_data.direction_angle_deg);
 
-    bool is_rotate = false;
-    uint8_t count = 0;
-    int8_t tmp_angle_deg = acc_angle_deg;
-
-    if (acc_angle_deg > 0) {
-        while (tmp_angle_deg >= tb_data.direction_angle_deg) {
-            rotate_device(true);
-            is_rotate = true;
-            count++;
-            total++;
-            tmp_angle_deg -= tb_data.direction_angle_deg;
-            if (tmp_angle_deg < 0) {
-                tmp_angle_deg = 0;
-            }
-        }
-    } else if (acc_angle_deg < 0) {
-        while (tmp_angle_deg <= -tb_data.direction_angle_deg) {
-            rotate_device(false);
-            is_rotate = true;
-            count++;
-            total++;
-            tmp_angle_deg += tb_data.direction_angle_deg;
-            if (tmp_angle_deg > 0) {
-                tmp_angle_deg = 0;
-            }
-        }
-    }
-
-    if (is_rotate) {
-        LOG_DBG("count:%d, total:%d, remain angle:%d\n", count, total, tmp_angle_deg);
-        acc_angle_deg = tmp_angle_deg;
+    const int8_t rotate_num = (int8_t)(acc_angle_deg / tb_data.direction_angle_deg);
+    if (rotate_num == 0) {
         return;
     }
+
+    const uint8_t rotate_count = (rotate_num > 0) ? rotate_num : -rotate_num;
+    for (uint8_t i = 0; i < rotate_count; i++) {
+        rotate_device(is_cw);
+    }
+
+    acc_angle_deg %= tb_data.direction_angle_deg;
+ 
+    LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
 }
 
 void tb_detect_direction(const int16_t value, const bool is_y_value) {
