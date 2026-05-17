@@ -9,6 +9,11 @@ include: one_param.yaml
 
 properties:
   step-angle-degree:
-    description: the step of the rotation angle of the device, the range is from 3 to 45. it rotates angle with direction-angle-degree when total step is greather than direction-angle-degree within sample-time-ms. 
+    description: |
+      Step angle [deg] of the rotation.
+      Defines the angle rotated per single key press or single encoder step (pulse).
+      If this value is smaller than direction_angle_degree,
+      inputs are accumulated up to direction_angle_deg to determine rotation.
+      This value must be a divisor of 360, and the allowed range is between 3 to 45.
     type: int
     default: 45
