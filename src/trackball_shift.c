@@ -20,7 +20,7 @@ struct trackball_shift_data {
 
     uint8_t  direction_angle_deg;
     const uint16_t rotation_sample_time_ms;
-    const uint16_t direction_distance_threshold;
+    const uint32_t direction_squared_distance_threshold;
     const uint16_t direction_sample_time_ms;
 
     uint16_t device_angle_deg;
@@ -34,7 +34,7 @@ struct trackball_shift_data {
 static struct trackball_shift_data tb_data = {
     .direction_angle_deg = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG,
     .rotation_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS,
-    .direction_distance_threshold = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD,
+    .direction_squared_distance_threshold = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD * CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD,
     .direction_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS,
     .device_angle_deg = 0,
     .sin_value = 0,
@@ -248,8 +248,6 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
         return;
     }
 
-    const uint32_t dir_detect_threshold = tb_data.direction_distance_threshold * tb_data.direction_distance_threshold;
-
     static int16_t acc_x = 0;
     static int16_t acc_y = 0;
 
@@ -281,10 +279,10 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
 
     if (diff_time < tb_data.direction_sample_time_ms) {
         LOG_DBG("under detection [dst:%d %d -> %u/%u] [time:%lld - %lld = %lld/%d]",
-                acc_x, acc_y, distance, dir_detect_threshold,
+                acc_x, acc_y, distance, tb_data.direction_squared_distance_threshold,
                 curr_time, prev_time, diff_time, tb_data.direction_sample_time_ms);
 
-        if (distance < dir_detect_threshold) {
+        if (distance < tb_data.direction_squared_distance_threshold) {
             return;
         }
     }
@@ -293,14 +291,14 @@ void tb_detect_direction(const int16_t value, const bool is_y_value) {
     int16_t detected_roll_up_angle = (int16_t)(radian * 180 / M_PI);
 
     LOG_INF("timeout detection [dst:%d %d (deg:%d) -> %u/%u] [time:%lld - %lld = %lld/%d]",
-            acc_x, acc_y, detected_roll_up_angle, distance, dir_detect_threshold,
+            acc_x, acc_y, detected_roll_up_angle, distance, tb_data.direction_squared_distance_threshold,
             curr_time, prev_time, diff_time, tb_data.direction_sample_time_ms);
 
     prev_time = 0;
     acc_x = 0;
     acc_y = 0;
 
-    if (distance < dir_detect_threshold) {
+    if (distance < tb_data.direction_squared_distance_threshold) {
         return;
     }
 
