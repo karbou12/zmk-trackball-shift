@@ -17,14 +17,15 @@ LOG_MODULE_REGISTER(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 struct trackball_shift_data {
     struct k_mutex lock;
-    uint8_t  direction_angle_deg;
-    uint16_t device_angle_deg;
-    const uint16_t rotation_sample_time_ms;
-    int32_t  sin_value;
-    int32_t  cos_value;
 
+    uint8_t  direction_angle_deg;
+    const uint16_t rotation_sample_time_ms;
     const uint16_t direction_distance_threshold;
     const uint16_t direction_sample_time_ms;
+
+    uint16_t device_angle_deg;
+    int32_t  sin_value;
+    int32_t  cos_value;
 
     bool     is_detected;
     bool     is_detection_active;
@@ -32,12 +33,12 @@ struct trackball_shift_data {
 
 static struct trackball_shift_data tb_data = {
     .direction_angle_deg = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG,
-    .device_angle_deg = 0,
     .rotation_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS,
-    .sin_value = 0,
-    .cos_value = 0,
     .direction_distance_threshold = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD,
     .direction_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS,
+    .device_angle_deg = 0,
+    .sin_value = 0,
+    .cos_value = 0,
     .is_detected = false,
     .is_detection_active = false,
 };
