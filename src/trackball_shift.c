@@ -58,8 +58,8 @@ static uint8_t clamp_step_angle_deg(const uint8_t step_angle_deg, const uint8_t 
     }
 
     if (clamped_angle != 0) {
-        while (360 % clamped_angle != 0) {
-            clamped_angle++;
+        if (360 % clamped_angle != 0) {
+            clamped_angle = 360 / (uint8_t)(360 / clamped_angle);
         }
     }
 
