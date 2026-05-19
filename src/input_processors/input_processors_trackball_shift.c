@@ -37,10 +37,6 @@ static int trackball_shift_handle_event(const struct device *dev, struct input_e
     ARG_UNUSED(param2);
     ARG_UNUSED(state);
 
-    if (event->type != INPUT_EV_REL) {
-        return ZMK_INPUT_PROC_CONTINUE;
-    }
-
     if (tb_is_direction_detection_active()) {
         return tb_detect_direction(event->type, event->code, &event->value);
     } else {
