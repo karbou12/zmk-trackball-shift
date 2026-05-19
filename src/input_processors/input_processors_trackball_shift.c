@@ -37,43 +37,10 @@ static int trackball_shift_handle_event(const struct device *dev, struct input_e
     ARG_UNUSED(param2);
     ARG_UNUSED(state);
 
-    static int16_t raw_x = 0;
-    static int16_t raw_y = 0;
-
-    if (event->type != INPUT_EV_REL) {
-        return ZMK_INPUT_PROC_CONTINUE;
-    }
-
     if (tb_is_direction_detection_active()) {
-        if (event->code == INPUT_REL_X) {
-            tb_detect_direction(event->value, false);
-
-        } else if (event->code == INPUT_REL_Y) {
-            tb_detect_direction(event->value, true);
-
-        } else {
-            return ZMK_INPUT_PROC_CONTINUE;
-        }
-
-        event->value = 0;
+        return tb_detect_direction(event->type, event->code, &event->value);
     } else {
-        bool is_x = false;
-
-        if (event->code == INPUT_REL_X) {
-            raw_x = event->value;
-            is_x = true;
-
-        } else if (event->code == INPUT_REL_Y) {
-            raw_y = event->value;
-
-        } else {
-            return ZMK_INPUT_PROC_CONTINUE;
-        }
-
-        int16_t x = 0;
-        int16_t y = 0;
-        tb_rotate_point(raw_x, raw_y, &x, &y);
-        event->value = is_x ? x : y;
+        return tb_rotate_point(event->type, event->code, &event->value);
     }
 
     return 0;

@@ -30,23 +30,7 @@ static int trackball_direction_detection_handle_event(const struct device *dev, 
     ARG_UNUSED(param2);
     ARG_UNUSED(state);
 
-    if (event->type != INPUT_EV_REL) {
-        return ZMK_INPUT_PROC_CONTINUE;
-    }
-
-    if (event->code == INPUT_REL_X) {
-        tb_detect_direction(event->value, false);
-
-    } else if (event->code == INPUT_REL_Y) {
-        tb_detect_direction(event->value, true);
-
-    } else {
-        return ZMK_INPUT_PROC_CONTINUE;
-    }
-
-    event->value = 0;
-
-    return 0;
+    return tb_detect_direction(event->type, event->code, &event->value);
 }
 
 // API struct

@@ -10,6 +10,6 @@ extern void tb_set_device_angle_deg(const uint16_t device_angle_deg);
 extern void tb_set_direction_detection_active(const bool is_active);
 extern bool tb_is_direction_detection_active();
 
-extern void tb_rotate_point(const int16_t raw_x, const int16_t raw_y, int16_t* x, int16_t* y);
+extern int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value);
 extern void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw);
-extern void tb_detect_direction(const int16_t value, const bool is_y_value);
+extern int tb_detect_direction(const uint8_t type, const uint16_t code, int32_t* value);
