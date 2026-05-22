@@ -5,15 +5,4 @@ description: trackball shift cw/ccw rotation behavior
 
 compatible: "zmk,behavior-trackball-shift-rotation"
 
-include: one_param.yaml
-
-properties:
-  step-angle-deg:
-    description: |
-      Step angle [deg] of the rotation.
-      Defines the angle rotated per single key press or single encoder step (pulse).
-      If this value is smaller than direction_angle_degree,
-      inputs are accumulated up to direction_angle_deg to determine rotation.
-      This value must be a divisor of 360, and the allowed range is between 3 to 45.
-    type: int
-    default: 45
+include: two_param.yaml

@@ -9,23 +9,22 @@
 
 / {
     behaviors {
-#if ZMK_BEHAVIOR_OMIT(TB_ROT_45)
+#if ZMK_BEHAVIOR_OMIT(TB_ROT)
         /omit-if-no-ref/
 #endif
-        tb_rot_45: tr45 {
+        tbr: tb_rot {
             compatible = "zmk,behavior-trackball-shift-rotation";
-            #binding-cells = <1>;
-            step-angle-deg = <45>;
-            display-name = "Trackball Shift Rotation with 45 [deg]";
+            #binding-cells = <2>;
+            display-name = "Trackball Shift Rotation";
         };
 
 #if ZMK_BEHAVIOR_OMIT(ENC_TB_ROT_45)
         /omit-if-no-ref/
 #endif
-        enc_tb_rot_45: enc_tr45 {
+        enc_tbr_45: enc_tb45 {
             compatible = "zmk,behavior-sensor-rotate";
             #sensor-binding-cells = <0>;
-            bindings = <&tb_rot_45 TB_ROT_CCW>, <&tb_rot_45 TB_ROT_CW>;
+            bindings = <&tbr TB_CCW_45>, <&tbr TB_CW_45>;
         };
     };
 };

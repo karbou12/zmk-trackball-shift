@@ -47,17 +47,14 @@ I extracted the feature as a module and improve it.
 #### behavior
 
 - `zmk,behavior-trackball-shift-rotation`
-  - properties in dtsi
-    - step-angle-deg
-      - Step angle [deg] of the rotation.
-      - Defines the angle rotated per single key press or single encoder step (pulse).
-      - If this value is smaller than direction_angle_degree,
-        inputs are accumulated up to direction_angle_deg to determine rotation.
-      - This value must be a divisor of 360, and the allowed range is between 3 to 45.
-      - Default value is 45.
-  - param1 in keymap
-    - TB_ROT_CW : rotate clockwise
-    - TB_ROT_CCW : rotate counter-clockwise
+  - parameter #1
+    - TB_CW_CMD  : rotate clockwise
+    - TB_CCW_CMD : rotate counter-clockwise
+  - parameter #2 : Step angle [deg] of the rotation.
+    - Defines the angle rotated per single key press or single encoder step (pulse).
+    - If this value is smaller than direction_angle_degree,
+      inputs are accumulated up to direction_angle_deg to determine rotation.
+    - This value must be a divisor of 360, and the allowed range is between 3 to 45.
 
 ### trackball-direction-detection
 
