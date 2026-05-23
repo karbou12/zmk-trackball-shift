@@ -47,7 +47,31 @@ static const struct behavior_parameter_metadata_set rotate_metadata_set = {
     .param2_values_len = ARRAY_SIZE(rotate_param2_values),
 };
 
-static const struct behavior_parameter_metadata_set metadata_sets[] = {rotate_metadata_set};
+static const struct behavior_parameter_value_metadata set_angle_param1_values[] = {
+    {
+        .display_name = "Set Device Angle",
+        .type = BEHAVIOR_PARAMETER_VALUE_TYPE_VALUE,
+        .value = TB_SET_CMD,
+    },
+};
+
+static const struct behavior_parameter_value_metadata set_angle_param2_values[] = {
+    {
+        .display_name = "Angle",
+        .type = BEHAVIOR_PARAMETER_VALUE_TYPE_RANGE,
+        .range = {.min = 0, .max = 360},
+    },
+};
+
+static const struct behavior_parameter_metadata_set set_angle_metadata_set = {
+    .param1_values = set_angle_param1_values,
+    .param1_values_len = ARRAY_SIZE(set_angle_param1_values),
+    .param2_values = set_angle_param2_values,
+    .param2_values_len = ARRAY_SIZE(set_angle_param2_values),
+};
+
+static const struct behavior_parameter_metadata_set metadata_sets[] = {rotate_metadata_set,
+                                                                       set_angle_metadata_set};
 
 static const struct behavior_parameter_metadata metadata = {
     .sets_len = ARRAY_SIZE(metadata_sets),
@@ -68,6 +92,11 @@ static int on_trackball_shift_rotation_binding_pressed(struct zmk_behavior_bindi
         case TB_CCW_CMD:
             LOG_INF("Rotate Counter Clockwise");
             tb_rotate_device_with_step(binding->param2, false);
+            return ZMK_BEHAVIOR_OPAQUE;
+
+        case TB_SET_CMD:
+            LOG_INF("Set Device Angle");
+            tb_set_device_angle_deg(binding->param2);
             return ZMK_BEHAVIOR_OPAQUE;
 
         default:
