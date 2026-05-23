@@ -34,7 +34,7 @@ static const struct behavior_parameter_value_metadata rotate_param1_values[] = {
 
 static const struct behavior_parameter_value_metadata rotate_param2_values[] = {
     {
-        .display_name = "Rotate Angle",
+        .display_name = "Rotation Angle",
         .type = BEHAVIOR_PARAMETER_VALUE_TYPE_RANGE,
         .range = {.min = 3, .max = 45},
     },
