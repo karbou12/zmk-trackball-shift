@@ -10,6 +10,7 @@ I extracted the feature as a module and improve it.
 
 - Rotates xy input coordinate by the default angle that defined in configuration file.
 - Supports CW/CCW rotation of the coordinate by key press and rotary encoder. A rotation angle is configurable.
+- Supports setting the device angle via behavior key press. The angle is configurable by a behavior parameter.
 - Detects a direction of trackball device by rolling a trackball from down to up on a detection layer, or on holding a behavior key. It is reset on disconnect of the device.
 
 ## Configuration
@@ -55,6 +56,16 @@ I extracted the feature as a module and improve it.
     - If this value is smaller than direction_angle_degree,
       inputs are accumulated up to direction_angle_deg to determine rotation.
     - This value must be a divisor of 360, and the allowed range is between 3 to 45.
+
+### trackball-shift-set-device-angle
+
+#### behavior
+
+- `zmk,behavior-trackball-shift-rotation`
+  - parameter #1
+    - TB_SET_CMD : set device angle
+  - parameter #2 : device angle [deg]
+    - If non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
 
 ### trackball-direction-detection
 
