@@ -19,25 +19,35 @@ LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 #if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
-static const struct behavior_parameter_value_metadata no_arg_values[] = {
+static const struct behavior_parameter_value_metadata rotate_param1_values[] = {
     {
-        .display_name = "Clockwise",
+        .display_name = "Rotate Clockwise",
         .type = BEHAVIOR_PARAMETER_VALUE_TYPE_VALUE,
-        .value = TB_ROT_CW,
+        .value = TB_CW_CMD,
     },
     {
-        .display_name = "Counter-Clockwise",
+        .display_name = "Rotate Counter-Clockwise",
         .type = BEHAVIOR_PARAMETER_VALUE_TYPE_VALUE,
-        .value = TB_ROT_CCW,
+        .value = TB_CCW_CMD,
     },
 };
 
-static const struct behavior_parameter_metadata_set no_args_set = {
-    .param1_values = no_arg_values,
-    .param1_values_len = ARRAY_SIZE(no_arg_values),
+static const struct behavior_parameter_value_metadata rotate_param2_values[] = {
+    {
+        .display_name = "Rotation Angle",
+        .type = BEHAVIOR_PARAMETER_VALUE_TYPE_RANGE,
+        .range = {.min = 3, .max = 45},
+    },
 };
 
-static const struct behavior_parameter_metadata_set metadata_sets[] = {no_args_set};
+static const struct behavior_parameter_metadata_set rotate_metadata_set = {
+    .param1_values = rotate_param1_values,
+    .param1_values_len = ARRAY_SIZE(rotate_param1_values),
+    .param2_values = rotate_param2_values,
+    .param2_values_len = ARRAY_SIZE(rotate_param2_values),
+};
+
+static const struct behavior_parameter_metadata_set metadata_sets[] = {rotate_metadata_set};
 
 static const struct behavior_parameter_metadata metadata = {
     .sets_len = ARRAY_SIZE(metadata_sets),
@@ -45,34 +55,23 @@ static const struct behavior_parameter_metadata metadata = {
 };
 #endif // IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
 
-struct behavior_trackball_shift_rotation_config {
-    uint8_t step_angle_deg;
-};
-
-static int behavior_trackball_shift_rotation_init(const struct device *dev) {
-    return 0;
-};
-
 static int on_trackball_shift_rotation_binding_pressed(struct zmk_behavior_binding *binding,
                                                        struct zmk_behavior_binding_event event) {
     ARG_UNUSED(event);
 
-    const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
-    const struct behavior_trackball_shift_rotation_config *config = dev->config;
-
     switch (binding->param1) {
-        case TB_ROT_CW:
-            LOG_INF("ROT_CW");
-            tb_rotate_device_with_step(config->step_angle_deg, true);
+        case TB_CW_CMD:
+            LOG_INF("Rotate Clockwise");
+            tb_rotate_device_with_step(binding->param2, true);
             return ZMK_BEHAVIOR_OPAQUE;
 
-        case TB_ROT_CCW:
-            LOG_INF("ROT_CCW");
-            tb_rotate_device_with_step(config->step_angle_deg, false);
+        case TB_CCW_CMD:
+            LOG_INF("Rotate Counter Clockwise");
+            tb_rotate_device_with_step(binding->param2, false);
             return ZMK_BEHAVIOR_OPAQUE;
 
         default:
-            LOG_ERR("Unknown TB_ROT command: %d", binding->param1);
+            LOG_ERR("Unknown trackball shift command: %d", binding->param1);
             return -ENOTSUP;
     };
 }
@@ -94,15 +93,11 @@ static const struct behavior_driver_api trackball_shift_rotation_driver_api = {
 };
 
 #define TRACKBALL_SHIFT_ROT_INST(n)                                             \
-    static const struct behavior_trackball_shift_rotation_config                \
-        behavior_trackball_shift_rotation_config_##n = {                        \
-        .step_angle_deg = DT_INST_PROP_OR(n, step_angle_deg, 45),               \
-    };                                                                          \
     BEHAVIOR_DT_INST_DEFINE(n,                                                  \
-                            &behavior_trackball_shift_rotation_init,            \
                             NULL,                                               \
                             NULL,                                               \
-                            &behavior_trackball_shift_rotation_config_##n,      \
+                            NULL,                                               \
+                            NULL,                                               \
                             POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,   \
                             &trackball_shift_rotation_driver_api);
 
