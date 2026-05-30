@@ -13,6 +13,83 @@ I have now extracted that feature into this standalone module and improved upon 
 - **Fixed Angle Selection:** Supports setting the device angle directly via behavior key presses. The angle can be configured using a behavior parameter.
 - **Direction Detection:** Detects the physical orientation of the trackball device by rolling the ball from bottom to top while on a specific detection layer or holding a behavior key. The orientation resets when the device disconnects.
 
+## Installation
+
+Add this module to your ZMK firmware project by updating your `config/west.yml` file.
+
+### 1. Update `west.yml`
+
+Add this repository to the `remotes` and `projects` sections:
+
+```yaml
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    # Add this remote
+    - name: karbou12
+      url-base: https://github.com/karbou12
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      import: app/west.yml
+    # Add this project module
+    - name: zmk-trackball-shift
+      remote: karbou12
+      revision: main
+```
+
+### 2. Basic Configuration
+
+To enable the basic trackball shift functionality, include the header and define the input processor in your `.dtsi`, `.overlay`, or `.keymap` file:
+
+```c
+#include <input_processors/trackball_shift.dtsi>
+#include <input_processors/trackball_direction_detection.dtsi>
+#include <behaviors/trackball_shift_rotation.dtsi>
+#include <behaviors/trackball_direction_detection.dtsi>
+
+/ {
+    trackball_listener: trackball_listener {
+        compatible = "zmk,input-listener";
+        status = "okay";
+        device = <&trackball>;
+
+        // the trackball shift input processor
+        input-processors = <&zip_trackball_shift>;
+
+        // direction detection input processor
+        trackball_shift_detection {
+            layers = <1>;
+            input-processors = <&zip_trackball_direction_detection>;
+        };
+    };
+};
+
+// (Optional) Set your initial physical device angle here
+&zip_trackball_shift {
+    default-device-angle-deg = <90>;
+};
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        trackball_shift_layer {
+            bindings = <
+                // Dynamic CW/CCW Rotation Behavior
+                &tbr TB_CCW_45     &tbr TB_CW_45
+
+                // Fixed Angle Selection Behavior
+                &tbr TB_0_DEG      &tbr TB_315_DEG
+
+                // Direction Detection Behavior
+                &tb_dd
+            >;
+        };
+    };
+};
+```
+
 ## Trackball Shift Input Processor
 
 ### Overview
