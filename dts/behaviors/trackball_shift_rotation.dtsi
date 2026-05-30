@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/zmk/behaviors.h>
+#include <dt-bindings/zmk/trackball_shift_rotation.h>
+
+/ {
+    behaviors {
+#if ZMK_BEHAVIOR_OMIT(TB_ROT)
+        /omit-if-no-ref/
+#endif
+        tbr: tb_rot {
+            compatible = "zmk,behavior-trackball-shift-rotation";
+            #binding-cells = <2>;
+            display-name = "Trackball Shift Rotation";
+        };
+
+#if ZMK_BEHAVIOR_OMIT(ENC_TB_ROT_45)
+        /omit-if-no-ref/
+#endif
+        enc_tbr_45: enc_tb45 {
+            compatible = "zmk,behavior-sensor-rotate";
+            #sensor-binding-cells = <0>;
+            bindings = <&tbr TB_CCW_45>, <&tbr TB_CW_45>;
+        };
+    };
+};

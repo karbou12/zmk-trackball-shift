@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+# SPDX-License-Identifier: MIT
+
+description: trackball shift direction detection behavior
+
+compatible: "zmk,behavior-trackball-direction-detection"
+
+include: zero_param.yaml

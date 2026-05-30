@@ -1,0 +1,8 @@
+# Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+# SPDX-License-Identifier: MIT
+
+description: Input Processor for detecion the direction of trackball device
+
+compatible: "zmk,input-processor-trackball-direction-detection"
+
+include: ip_zero_param.yaml

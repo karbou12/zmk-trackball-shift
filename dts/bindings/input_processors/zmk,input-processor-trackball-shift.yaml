@@ -1,0 +1,16 @@
+# Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+# SPDX-License-Identifier: MIT
+
+description: Input Processor for rotation xy input of trackball device
+
+compatible: "zmk,input-processor-trackball-shift"
+
+include: ip_zero_param.yaml
+
+properties:
+  default-device-angle-deg:
+    description: |
+      default device angle [deg] for trackball shift.
+      if non-zero, this value must be a multiple of the direction_angle_deg, and a divisor of 360.
+    type: int
+    default: 0

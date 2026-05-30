@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) 2026 Tano Karbou (github: karbou12 / X: @karbou_12)
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/ {
+    /omit-if-no-ref/ zip_trackball_shift: zip_trackball_shift {
+        compatible = "zmk,input-processor-trackball-shift";
+        #input-processor-cells = <0>;
+
+        default-device-angle-deg = <0>;
+    };
+};
