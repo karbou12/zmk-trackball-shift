@@ -80,7 +80,7 @@ To enable the basic trackball shift functionality, include the header and define
                 &tbr TB_CCW_45     &tbr TB_CW_45
 
                 // Fixed Angle Selection Behavior
-                &tbr TB_0_DEG      &tbr TB_315_DEG
+                &tbr TB_0_DEG      &tbr TB_90_DEG
 
                 // Direction Detection Behavior
                 &tb_dd
@@ -106,18 +106,63 @@ When used, the trackball shift input processor takes no parameters. It must be u
 
 #### Input Processor Ordering Rules:
 
-- **General Recommendation:** It is recommended not to use transform input processors alongside this module; instead, configure the `default-device-angle-deg` property of `&zip_trackball_shift`.
-- **Using Transform Processors:** If you choose to use transform input processors, `&zip_trackball_shift` **must be placed after** them in the sequence.
-- **Layer-Specific Transformers:** If you add additional transform input processors on non-default layers, the initial base sequence (the default layer's transformers followed by `&zip_trackball_shift`) **must follow the exact same order** as the default layer. Any layer-specific transform processors must then be appended afterward.
+- **General Recommendation:** It is recommended not to use xy transform input processors alongside this module; instead, configure the `default-device-angle-deg` property of `&zip_trackball_shift`.
+- **Using XY Transform Processors:** If you choose to use xy transform input processors, `&zip_trackball_shift` **must be placed after** them in the sequence.
+- **Layer-Specific XY Transformers:** If you add additional xy transform input processors on non-default layers, the initial base sequence (the default layer's xy transformers followed by `&zip_trackball_shift`) **must follow the exact same order** as the default layer. Any layer-specific xy transform processors must then be appended afterward.
 
 ```c
 &zip_trackball_shift
 ```
 
-#### Example
+#### Recommended Example
 
 ```c
 #include <input_processors/trackball_shift.dtsi>
+#include <input_processors/trackball_direction_detection.dtsi>
+
+/ {
+    trackball_listener: trackball_listener {
+        compatible = "zmk,input-listener";
+        status = "okay";
+        device = <&trackball>;
+
+        // Not use xy transformer input processors
+        input-processors = <
+            &zip_trackball_shift
+            &zip_mouse_gesture
+        >;
+
+        // Used in any layers except the detection layer
+        // scroll transform can be used
+        scroller {
+            layers = <1>;
+            input-processors = <
+                &zip_trackball_shift
+                &zip_xy_to_scroll_mapper &zip_scroll_scaler 1 10
+                &zip_scroll_transform INPUT_TRANSFORM_X_INVERT
+                &zip_inertia
+            >;
+        };
+
+        // NOT used in the trackball direction detection layer
+        direction_detection {
+            layers = <2>;
+            input-processors = <&zip_trackball_direction_detection>;
+        };
+    };
+};
+
+// To overwrite the default angle of the pre-defined instance `zip_trackball_shift`:
+&zip_trackball_shift {
+    default-device-angle-deg = <270>;
+};
+```
+
+#### Example with Transform Input Processors
+
+```c
+#include <input_processors/trackball_shift.dtsi>
+#include <input_processors/trackball_direction_detection.dtsi>
 
 / {
     trackball_listener: trackball_listener {
@@ -153,10 +198,7 @@ When used, the trackball shift input processor takes no parameters. It must be u
     };
 };
 
-// To overwrite the default angle of the pre-defined instance `zip_trackball_shift`:
-&zip_trackball_shift {
-    default-device-angle-deg = <270>;
-};
+// default-device-angle-deg will not be set because device angle is set by xy transform input processors.
 ```
 
 ### Pre-Defined Instances
@@ -227,7 +269,7 @@ The Dynamic CW/CCW Rotation behavior rotates XY input coordinates clockwise or c
 
 ### Trackball Shift Rotation Command Defines
 
-The Trackball Shift Rotation command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/dts/bindings/input_processors/zmk,input-processor-trackball-shift.yaml) header, which is added at the top of your keymap file:
+The Trackball Shift Rotation command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/include/dt-bindings/zmk/trackball_shift_rotation.h) header, which is added at the top of your keymap file:
 
 ```c
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
@@ -362,7 +404,7 @@ Fixed Angle Selection supports setting the device angle directly via behavior ke
 
 ### Fixed Angle Command Defines
 
-The Trackball Shift Fixed Angle command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/dts/bindings/input_processors/zmk,input-processor-trackball-shift.yaml) header, which is added at the top of the keymap file:
+The Trackball Shift Fixed Angle command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/include/dt-bindings/zmk/trackball_shift_rotation.h) header, which is added at the top of the keymap file:
 
 ```c
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
@@ -435,6 +477,7 @@ When configuring multiple input processors, the trackball shift direction detect
 #### Example
 
 ```c
+#include <input_processors/trackball_shift.dtsi>
 #include <input_processors/trackball_direction_detection.dtsi>
 
 / {
