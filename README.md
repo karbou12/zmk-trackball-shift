@@ -269,7 +269,7 @@ The Dynamic CW/CCW Rotation behavior rotates XY input coordinates clockwise or c
 
 ### Trackball Shift Rotation Command Defines
 
-The Trackball Shift Rotation command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/dts/bindings/input_processors/zmk,input-processor-trackball-shift.yaml) header, which is added at the top of your keymap file:
+The Trackball Shift Rotation command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/include/dt-bindings/zmk/trackball_shift_rotation.h) header, which is added at the top of your keymap file:
 
 ```c
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
@@ -404,7 +404,7 @@ Fixed Angle Selection supports setting the device angle directly via behavior ke
 
 ### Fixed Angle Command Defines
 
-The Trackball Shift Fixed Angle command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/dts/bindings/input_processors/zmk,input-processor-trackball-shift.yaml) header, which is added at the top of the keymap file:
+The Trackball Shift Fixed Angle command defines are provided through the [`dt-bindings/zmk/trackball_shift_rotation.h`](https://github.com/karbou12/zmk-trackball-shift/blob/main/include/dt-bindings/zmk/trackball_shift_rotation.h) header, which is added at the top of the keymap file:
 
 ```c
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
