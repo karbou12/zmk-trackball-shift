@@ -236,7 +236,7 @@ void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) 
     }
 
     acc_angle_deg %= tb_data.direction_angle_deg;
- 
+
     LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
 }
 
