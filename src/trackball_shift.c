@@ -198,8 +198,8 @@ int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value) {
     // when angle is 0
     // x' = x cos - y sin
     // y' = x sin + y cos
-    int16_t x = (int16_t)((raw_x * tb_data.cos_value - raw_y * tb_data.sin_value) / SCALER);;
-    int16_t y = (int16_t)((raw_x * tb_data.sin_value + raw_y * tb_data.cos_value) / SCALER);;
+    int16_t x = (int16_t)((raw_x * tb_data.cos_value - raw_y * tb_data.sin_value) / SCALER);
+    int16_t y = (int16_t)((raw_x * tb_data.sin_value + raw_y * tb_data.cos_value) / SCALER);
 
     LOG_DBG("[device rotation angle:%u] [x:y] [%d:%d] -> [%d:%d]",
             tb_data.device_angle_deg, raw_x, raw_y, x, y);
@@ -236,7 +236,7 @@ void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) 
     }
 
     acc_angle_deg %= tb_data.direction_angle_deg;
- 
+
     LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
 }
 

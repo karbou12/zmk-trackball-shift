@@ -102,7 +102,7 @@ static int on_trackball_shift_rotation_binding_pressed(struct zmk_behavior_bindi
         default:
             LOG_ERR("Unknown trackball shift command: %d", binding->param1);
             return -ENOTSUP;
-    };
+    }
 }
 
 static int on_trackball_shift_rotation_binding_released(struct zmk_behavior_binding *binding,
