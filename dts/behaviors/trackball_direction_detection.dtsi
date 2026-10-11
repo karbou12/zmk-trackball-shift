@@ -14,7 +14,7 @@
         tb_dd: tb_dd {
             compatible = "zmk,behavior-trackball-direction-detection";
             #binding-cells = <0>;
-            display-name = "Trackball Shift direction detection";
+            display-name = "Trackball Shift Direction Detection";
         };
     };
 };

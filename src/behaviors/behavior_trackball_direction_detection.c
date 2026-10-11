@@ -17,6 +17,13 @@
 LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+static const struct behavior_parameter_value_metadata metadata_sets[] = {};
+static const struct behavior_parameter_metadata metadata = {
+    .sets_len = ARRAY_SIZE(metadata_sets),
+    .sets = metadata_sets,
+};
+#endif // IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
 
 static int on_trackball_direction_detection_binding_pressed(struct zmk_behavior_binding *binding,
                                                             struct zmk_behavior_binding_event event) {
@@ -41,6 +48,9 @@ static int on_trackball_direction_detection_binding_released(struct zmk_behavior
 static const struct behavior_driver_api trackball_direction_detection_driver_api = {
     .binding_pressed = on_trackball_direction_detection_binding_pressed,
     .binding_released = on_trackball_direction_detection_binding_released,
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+    .parameter_metadata = &metadata,
+#endif
 };
 
 #define TRACKBALL_DIRECTION_DETCTION_ROT_INST(n)                                \
