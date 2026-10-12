@@ -24,7 +24,7 @@ static int trackball_shift_init(const struct device *dev) {
 
     struct trackball_shift_config *config = (struct trackball_shift_config *)dev->config;
 
-    tb_set_device_angle_deg(config->default_device_angle_deg);
+    tb_init_device_angle_deg(config->default_device_angle_deg);
 
     return 0;
 }

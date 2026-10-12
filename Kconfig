@@ -40,7 +40,14 @@ config ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS
     help
         If the trackball's movement distance exceeds direction_distance_threshold within this sample time, the direction is determined.
         If the threshold is not exceeded within this time, the accumulated distance is reset.
-    
+
+config ZMK_TRACKBALL_SHIFT_LAZY_LOAD
+    bool "Lazy loading trackball shift input processor."
+    default false
+    help
+        If enabled, the trackball shift input processor becomes active after the device angle is changed by behaviors or the direction detection input processor of trackball shift.
+        If disabled, the trackball shift input processor becomes active on initialization.
+        This is used to prioritize per-layer angle behaviors such as Nape Origin / Nape Pro.
 
 module = TRACKBALL_SHIFT
 module-str = TRACKBALL_SHIFT
