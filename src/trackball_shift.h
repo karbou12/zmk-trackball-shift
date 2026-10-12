@@ -5,7 +5,10 @@
  */
 #pragma once
 
+#include <zmk_trackball_shift/trackball_shift.h>
+
 extern void tb_init();
+extern void tb_reset_device_angle();
 extern void tb_set_device_angle_deg(const uint16_t device_angle_deg);
 extern void tb_set_direction_detection_active(const bool is_active);
 extern bool tb_is_direction_detection_active();

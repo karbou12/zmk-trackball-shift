@@ -24,10 +24,13 @@ struct trackball_shift_data {
     const uint32_t direction_squared_distance_threshold;
     const uint16_t direction_sample_time_ms;
 
+    uint16_t init_device_angle_deg;
     uint16_t device_angle_deg;
     int32_t  sin_value;
     int32_t  cos_value;
 
+    bool     is_lazy;
+    bool     is_device_angle_changed;
     bool     is_detected;
     bool     is_detection_active;
 };
@@ -37,9 +40,12 @@ static struct trackball_shift_data tb_data = {
     .rotation_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_ROTATION_SAMPLE_TIME_MS,
     .direction_squared_distance_threshold = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD * CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_DISTANCE_THRESHOLD,
     .direction_sample_time_ms = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_SAMPLE_TIME_MS,
+    .init_device_angle_deg = 0,
     .device_angle_deg = 0,
     .sin_value = 0,
     .cos_value = 0,
+    .is_lazy = CONFIG_ZMK_TRACKBALL_SHIFT_LAZY_LOAD,
+    .is_device_angle_changed = false,
     .is_detected = false,
     .is_detection_active = false,
 };
@@ -141,6 +147,28 @@ static void rotate_device(const bool is_cw) {
     tb_set_device_angle_deg(clamp_angle_deg(next_device_angle));
 }
 
+static void set_device_angle_deg(const uint16_t device_angle_deg, const bool is_init) {
+    tb_data.device_angle_deg = clamp_device_angle_deg(device_angle_deg, tb_data.direction_angle_deg);
+    get_sin_cos_value(tb_data.device_angle_deg, &tb_data.sin_value, &tb_data.cos_value);
+
+    if (is_init) {
+        tb_data.init_device_angle_deg = tb_data.device_angle_deg;
+        tb_data.is_device_angle_changed = false;
+    } else {
+        tb_data.is_device_angle_changed = true;
+    }
+
+    LOG_INF("[device angle:%u][sin_val:%u][cos_val:%u]", tb_data.device_angle_deg, tb_data.sin_value, tb_data.cos_value);
+}
+
+void tb_init_device_angle_deg(const uint16_t device_angle_deg) {
+    set_device_angle_deg(device_angle_deg, true);
+}
+
+bool tb_is_device_angle_changed() {
+    return tb_data.is_device_angle_changed;
+}
+
 void tb_init() {
     static bool is_init = false;
     if (is_init) {
@@ -152,11 +180,12 @@ void tb_init() {
     tb_data.direction_angle_deg = clamp_step_angle_deg(tb_data.direction_angle_deg, 3, 45);
 }
 
-void tb_set_device_angle_deg(const uint16_t device_angle_deg) {
-    tb_data.device_angle_deg = clamp_device_angle_deg(device_angle_deg, tb_data.direction_angle_deg);
-    get_sin_cos_value(tb_data.device_angle_deg, &tb_data.sin_value, &tb_data.cos_value);
+void tb_reset_device_angle() {
+    tb_init_device_angle_deg(tb_data.init_device_angle_deg);
+}
 
-    LOG_INF("[device angle:%u][sin_val:%u][cos_val:%u]", tb_data.device_angle_deg, tb_data.sin_value, tb_data.cos_value);
+void tb_set_device_angle_deg(const uint16_t device_angle_deg) {
+    set_device_angle_deg(device_angle_deg, false);
 }
 
 void tb_set_direction_detection_active(const bool is_active) {
@@ -175,9 +204,12 @@ bool tb_is_direction_detection_active() {
     return is_active;
 }
 
-
 int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value) {
     tb_data.is_detected = false;
+
+    if (tb_data.is_lazy && !tb_data.is_device_angle_changed) {
+        return ZMK_INPUT_PROC_CONTINUE;
+    }
 
     if (type != INPUT_EV_REL || (code != INPUT_REL_X && code != INPUT_REL_Y)) {
         return ZMK_INPUT_PROC_CONTINUE;
