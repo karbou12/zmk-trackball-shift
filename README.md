@@ -248,6 +248,7 @@ Definition file: Kconfig
 | Config | Type | Description | Default |
 |---|---|---|---|
 | `CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG` | int | Angle [deg] of each direction for trackball shift. It must be between 3 and 45, and must be a divisor of 360. | 45 |
+| `CONFIG_ZMK_TRACKBALL_SHIFT_LAZY_LOAD` | bool | Lazy loading trackball shift input processor. If enabled, the trackball shift input processor becomes active after the device angle is changed by behaviors or the direction detection input processor of trackball shift. | false |
 
 #### Devicetree
 
