@@ -12,6 +12,8 @@ I have now extracted that feature into this standalone module and improved upon 
 - **Dynamic CW/CCW Rotation:** Supports clockwise (CW) and counter-clockwise (CCW) coordinate rotation via key presses or rotary encoders. The rotation angle is fully configurable.
 - **Fixed Angle Selection:** Supports setting the device angle directly via behavior key presses. The angle can be configured using a behavior parameter.
 - **Direction Detection:** Detects the physical orientation of the trackball device by rolling the ball from bottom to top while on a specific detection layer or holding a behavior key. The orientation resets when the device disconnects.
+- **Lazy Load:** Supports lazy loading the trackball shift. It means that the trackball shift can be not active by default. When the device angle is changed by the trackball shift features, the trackball shift become active.
+- **Reset Angle:** Resets the devica angle to the initial/default state. And the trackball shift become inactive if the lazy load is set.
 
 ## Installation
 
@@ -84,6 +86,9 @@ To enable the basic trackball shift functionality, include the header and define
 
                 // Direction Detection Behavior
                 &tb_dd
+
+                // Reset Angle
+                &tb_reset
             >;
         };
     };
@@ -567,3 +572,31 @@ Definition file: `Kconfig`
 #### Devicetree
 
 None.
+
+## Reset Angle
+
+### Overview
+
+Resets the device angle to the initial/default state via behavior key presses.
+
+#### Behavior Bindings
+
+- Reference: `&tb_reset`
+- Parameters: None.
+
+### Examples
+
+```c
+#include <behaviors/trackball_shift_reset.dtsi>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        trackball_shift_layer {
+            bindings = <
+                &tb_reset
+            >;
+        };
+    };
+};
+```
