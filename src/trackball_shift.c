@@ -17,8 +17,6 @@
 LOG_MODULE_REGISTER(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 struct trackball_shift_data {
-    struct k_mutex lock;
-
     uint8_t  direction_angle_deg;
     const uint16_t rotation_sample_time_ms;
     const uint32_t direction_squared_distance_threshold;
@@ -34,6 +32,8 @@ struct trackball_shift_data {
     bool     is_detected;
     bool     is_detection_active;
 };
+
+K_MUTEX_DEFINE(tb_data_lock);
 
 static struct trackball_shift_data tb_data = {
     .direction_angle_deg = CONFIG_ZMK_TRACKBALL_SHIFT_DIRECTION_ANGLE_DEG,
@@ -140,14 +140,8 @@ static void get_sin_cos_value(const uint16_t angle_deg, int32_t* sin_value, int3
     }
 }
 
-static void rotate_device(const bool is_cw) {
-    const uint16_t next_device_angle = is_cw ? tb_data.device_angle_deg + tb_data.direction_angle_deg
-                                             : tb_data.device_angle_deg - tb_data.direction_angle_deg;
-
-    tb_set_device_angle_deg(clamp_angle_deg(next_device_angle));
-}
-
-static void set_device_angle_deg(const uint16_t device_angle_deg, const bool is_init) {
+// These helpers access shared state; callers must hold tb_data_lock.
+static void set_device_angle_deg_locked(const uint16_t device_angle_deg, const bool is_init) {
     tb_data.device_angle_deg = clamp_device_angle_deg(device_angle_deg, tb_data.direction_angle_deg);
     get_sin_cos_value(tb_data.device_angle_deg, &tb_data.sin_value, &tb_data.cos_value);
 
@@ -161,118 +155,15 @@ static void set_device_angle_deg(const uint16_t device_angle_deg, const bool is_
     LOG_INF("[device angle:%u][sin_val:%u][cos_val:%u]", tb_data.device_angle_deg, tb_data.sin_value, tb_data.cos_value);
 }
 
-void tb_init_device_angle_deg(const uint16_t device_angle_deg) {
-    set_device_angle_deg(device_angle_deg, true);
+static void rotate_device_locked(const bool is_cw) {
+    const uint16_t next_device_angle = is_cw ? tb_data.device_angle_deg + tb_data.direction_angle_deg
+                                             : tb_data.device_angle_deg - tb_data.direction_angle_deg;
+
+    set_device_angle_deg_locked(clamp_angle_deg(next_device_angle), false);
 }
 
-bool tb_is_device_angle_changed() {
-    return tb_data.is_device_angle_changed;
-}
-
-void tb_init() {
-    static bool is_init = false;
-    if (is_init) {
-        return;
-    }
-    is_init = true;
-
-    k_mutex_init(&tb_data.lock);
-    tb_data.direction_angle_deg = clamp_step_angle_deg(tb_data.direction_angle_deg, 3, 45);
-}
-
-void tb_reset_device_angle() {
-    tb_init_device_angle_deg(tb_data.init_device_angle_deg);
-}
-
-void tb_set_device_angle_deg(const uint16_t device_angle_deg) {
-    set_device_angle_deg(device_angle_deg, false);
-}
-
-void tb_set_direction_detection_active(const bool is_active) {
-    if (k_mutex_lock(&tb_data.lock, K_FOREVER) == 0) {
-        tb_data.is_detection_active = is_active;
-        k_mutex_unlock(&tb_data.lock);
-    }
-}
-
-bool tb_is_direction_detection_active() {
-    bool is_active = false;
-    if (k_mutex_lock(&tb_data.lock, K_FOREVER) == 0) {
-        is_active = tb_data.is_detection_active;
-        k_mutex_unlock(&tb_data.lock);
-    }
-    return is_active;
-}
-
-int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value) {
-    tb_data.is_detected = false;
-
-    if (tb_data.is_lazy && !tb_data.is_device_angle_changed) {
-        return ZMK_INPUT_PROC_CONTINUE;
-    }
-
-    if (type != INPUT_EV_REL || (code != INPUT_REL_X && code != INPUT_REL_Y)) {
-        return ZMK_INPUT_PROC_CONTINUE;
-    }
-
-    static int16_t raw_x = 0;
-    static int16_t raw_y = 0;
-
-    const bool is_x_value = (code == INPUT_REL_X);
-    if (is_x_value) {
-        raw_x = (int16_t)(*value);
-    } else {
-        raw_y = (int16_t)(*value);
-    }
-
-    const int32_t SCALER = 32767;
-
-    // when angle is 0
-    // x' = x cos - y sin
-    // y' = x sin + y cos
-    int16_t x = (int16_t)((raw_x * tb_data.cos_value - raw_y * tb_data.sin_value) / SCALER);
-    int16_t y = (int16_t)((raw_x * tb_data.sin_value + raw_y * tb_data.cos_value) / SCALER);
-
-    LOG_DBG("[device rotation angle:%u] [x:y] [%d:%d] -> [%d:%d]",
-            tb_data.device_angle_deg, raw_x, raw_y, x, y);
-
-    *value = is_x_value ? x : y;
-
-    return ZMK_INPUT_PROC_CONTINUE;
-}
-
-void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) {
-    static int8_t acc_angle_deg = 0;
-
-    static int64_t prev_time = 0;
-    int64_t curr_time = k_uptime_get();
-    const int64_t diff_time = curr_time - prev_time;
-    if ((prev_time == 0) || (diff_time > tb_data.rotation_sample_time_ms)) {
-        LOG_DBG("%s: clear acc", __FUNCTION__);
-        prev_time = curr_time;
-        acc_angle_deg = 0;
-    }
-
-    const uint8_t clamped_step_angle = clamp_step_angle_deg(step_angle_deg, 3, 45);
-    acc_angle_deg += is_cw ? clamped_step_angle : - clamped_step_angle;
-    LOG_DBG("%s: step:%d -> acc:%d/%u", __FUNCTION__, step_angle_deg, acc_angle_deg, tb_data.direction_angle_deg);
-
-    const int8_t rotate_num = (int8_t)(acc_angle_deg / tb_data.direction_angle_deg);
-    if (rotate_num == 0) {
-        return;
-    }
-
-    const uint8_t rotate_count = (rotate_num > 0) ? rotate_num : -rotate_num;
-    for (uint8_t i = 0; i < rotate_count; i++) {
-        rotate_device(is_cw);
-    }
-
-    acc_angle_deg %= tb_data.direction_angle_deg;
-
-    LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
-}
-
-int tb_detect_direction(const uint8_t type, const uint16_t code, int32_t* value) {
+// Caller must hold tb_data_lock.
+static int detect_direction_locked(const uint8_t type, const uint16_t code, int32_t* value) {
     const int16_t raw_value = (int16_t)(*value);
     *value = 0;
 
@@ -351,8 +242,147 @@ int tb_detect_direction(const uint8_t type, const uint16_t code, int32_t* value)
     const uint16_t clamped_angle = clamp_angle_deg(shifted_angle_in_direction);
     const uint8_t device_direction_index = (uint8_t)(clamped_angle / tb_data.direction_angle_deg);
 
-    tb_set_device_angle_deg(device_direction_index * tb_data.direction_angle_deg);
+    set_device_angle_deg_locked(device_direction_index * tb_data.direction_angle_deg, false);
     tb_data.is_detected = true;
 
     return ZMK_INPUT_PROC_CONTINUE;
+}
+
+void tb_init_device_angle_deg(const uint16_t device_angle_deg) {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    set_device_angle_deg_locked(device_angle_deg, true);
+    k_mutex_unlock(&tb_data_lock);
+}
+
+bool tb_is_device_angle_changed() {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    const bool is_changed = tb_data.is_device_angle_changed;
+    k_mutex_unlock(&tb_data_lock);
+    return is_changed;
+}
+
+void tb_init() {
+    static bool is_init = false;
+
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    if (is_init) {
+        k_mutex_unlock(&tb_data_lock);
+        return;
+    }
+
+    tb_data.direction_angle_deg = clamp_step_angle_deg(tb_data.direction_angle_deg, 3, 45);
+    is_init = true;
+    k_mutex_unlock(&tb_data_lock);
+}
+
+void tb_reset_device_angle() {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    set_device_angle_deg_locked(tb_data.init_device_angle_deg, true);
+    k_mutex_unlock(&tb_data_lock);
+}
+
+void tb_set_device_angle_deg(const uint16_t device_angle_deg) {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    set_device_angle_deg_locked(device_angle_deg, false);
+    k_mutex_unlock(&tb_data_lock);
+}
+
+void tb_set_direction_detection_active(const bool is_active) {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    tb_data.is_detection_active = is_active;
+    k_mutex_unlock(&tb_data_lock);
+}
+
+bool tb_is_direction_detection_active() {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    const bool is_active = tb_data.is_detection_active;
+    k_mutex_unlock(&tb_data_lock);
+    return is_active;
+}
+
+int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value) {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    tb_data.is_detected = false;
+
+    if (tb_data.is_lazy && !tb_data.is_device_angle_changed) {
+        k_mutex_unlock(&tb_data_lock);
+        return ZMK_INPUT_PROC_CONTINUE;
+    }
+
+    if (type != INPUT_EV_REL || (code != INPUT_REL_X && code != INPUT_REL_Y)) {
+        k_mutex_unlock(&tb_data_lock);
+        return ZMK_INPUT_PROC_CONTINUE;
+    }
+
+    static int16_t raw_x = 0;
+    static int16_t raw_y = 0;
+
+    const bool is_x_value = (code == INPUT_REL_X);
+    if (is_x_value) {
+        raw_x = (int16_t)(*value);
+    } else {
+        raw_y = (int16_t)(*value);
+    }
+
+    const int16_t current_raw_x = raw_x;
+    const int16_t current_raw_y = raw_y;
+    const int32_t sin_value = tb_data.sin_value;
+    const int32_t cos_value = tb_data.cos_value;
+    const uint16_t device_angle_deg = tb_data.device_angle_deg;
+    k_mutex_unlock(&tb_data_lock);
+
+    const int32_t SCALER = 32767;
+
+    // when angle is 0
+    // x' = x cos - y sin
+    // y' = x sin + y cos
+    int16_t x = (int16_t)((current_raw_x * cos_value - current_raw_y * sin_value) / SCALER);
+    int16_t y = (int16_t)((current_raw_x * sin_value + current_raw_y * cos_value) / SCALER);
+
+    LOG_DBG("[device rotation angle:%u] [x:y] [%d:%d] -> [%d:%d]",
+            device_angle_deg, current_raw_x, current_raw_y, x, y);
+
+    *value = is_x_value ? x : y;
+
+    return ZMK_INPUT_PROC_CONTINUE;
+}
+
+void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    static int8_t acc_angle_deg = 0;
+    static int64_t prev_time = 0;
+    int64_t curr_time = k_uptime_get();
+    const int64_t diff_time = curr_time - prev_time;
+    if ((prev_time == 0) || (diff_time > tb_data.rotation_sample_time_ms)) {
+        LOG_DBG("%s: clear acc", __FUNCTION__);
+        prev_time = curr_time;
+        acc_angle_deg = 0;
+    }
+
+    const uint8_t clamped_step_angle = clamp_step_angle_deg(step_angle_deg, 3, 45);
+    acc_angle_deg += is_cw ? clamped_step_angle : - clamped_step_angle;
+    LOG_DBG("%s: step:%d -> acc:%d/%u", __FUNCTION__, step_angle_deg, acc_angle_deg, tb_data.direction_angle_deg);
+
+    const int8_t rotate_num = (int8_t)(acc_angle_deg / tb_data.direction_angle_deg);
+    if (rotate_num == 0) {
+        k_mutex_unlock(&tb_data_lock);
+        return;
+    }
+
+    const uint8_t rotate_count = (rotate_num > 0) ? rotate_num : -rotate_num;
+    for (uint8_t i = 0; i < rotate_count; i++) {
+        rotate_device_locked(is_cw);
+    }
+
+    acc_angle_deg %= tb_data.direction_angle_deg;
+
+    LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
+    k_mutex_unlock(&tb_data_lock);
+}
+
+int tb_detect_direction(const uint8_t type, const uint16_t code, int32_t* value) {
+    k_mutex_lock(&tb_data_lock, K_FOREVER);
+    const int result = detect_direction_locked(type, code, value);
+    k_mutex_unlock(&tb_data_lock);
+    return result;
 }

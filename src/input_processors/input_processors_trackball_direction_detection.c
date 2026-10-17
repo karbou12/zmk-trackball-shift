@@ -17,7 +17,6 @@ LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 static int trackball_direction_detection_init(const struct device *dev) {
     ARG_UNUSED(dev);
-    tb_init();
 
     return 0;
 }
