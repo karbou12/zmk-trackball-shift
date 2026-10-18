@@ -14,6 +14,7 @@ I have now extracted that feature into this standalone module and improved upon 
 - **Direction Detection:** Detects the physical orientation of the trackball device by rolling the ball from bottom to top while on a specific detection layer or holding a behavior key. The orientation resets when the device disconnects.
 - **Lazy Load:** Supports lazy loading the trackball shift. It means that the trackball shift can be not active by default. When the device angle is changed by the trackball shift features, the trackball shift become active.
 - **Reset Angle:** Resets the devica angle to the initial/default state. And the trackball shift become inactive if the lazy load is set.
+- **Raising Event:** Whenever the device angle changes, the module raises the ZMK `zmk_trackball_angle_changed` event with the normalized angle in degrees.
 
 ## Installation
 
@@ -600,3 +601,50 @@ Resets the device angle to the initial/default state via behavior key presses.
     };
 };
 ```
+
+## Raising Event
+
+### Overview
+
+Whenever the device angle changes by the trackball shift features, the module raises the ZMK `zmk_trackball_angle_changed` event with the normalized angle in degrees.
+This also covers direction detection and angle reset. Other modules can subscribe to this event through `<zmk/events/trackball_angle_changed.h>`.
+
+### Event
+
+- Event: `zmk_trackball_angle_changed`
+
+### Structure
+
+```c
+struct zmk_trackball_angle_changed {
+    uint16_t angle_deg;
+};
+```
+
+####  Data Fields
+
+| Type | Variable | Description |
+|---|---|---|
+| `uint16_t`| `angle_deg` | changed angle [deg] by the trackball shift features. |
+
+
+### Examples
+
+```c
+
+#include <zmk/events/trackball_angle_changed.h>
+
+static int trackball_angle_changed_listener_cb(const zmk_event_t *eh) {
+    const struct zmk_trackball_angle_changed *event = as_zmk_trackball_angle_changed(eh);
+    if (event == NULL) {
+            return 0;
+    }
+
+    uint16_t angle = event->angle_deg;
+    ...
+}
+
+ZMK_LISTENER(trackball_angle_changed_listener, trackball_angle_changed_listener_cb);
+ZMK_SUBSCRIPTION(trackball_angle_changed_listener, zmk_trackball_angle_changed);
+```
+
