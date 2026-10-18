@@ -11,6 +11,7 @@
 #define M_PI 3.1415926536
 #endif
 #include <drivers/input_processor.h>
+#include <zmk/events/trackball_angle_changed.h>
 #include "trackball_shift.h"
 #include <dt-bindings/zmk/trackball_shift_rotation.h>
 
@@ -141,7 +142,8 @@ static void get_sin_cos_value(const uint16_t angle_deg, int32_t* sin_value, int3
 }
 
 // These helpers access shared state; callers must hold tb_data_lock.
-static void set_device_angle_deg_locked(const uint16_t device_angle_deg, const bool is_init) {
+static bool set_device_angle_deg_locked(const uint16_t device_angle_deg, const bool is_init) {
+    const uint16_t previous_device_angle_deg = tb_data.device_angle_deg;
     tb_data.device_angle_deg = clamp_device_angle_deg(device_angle_deg, tb_data.direction_angle_deg);
     get_sin_cos_value(tb_data.device_angle_deg, &tb_data.sin_value, &tb_data.cos_value);
 
@@ -153,6 +155,15 @@ static void set_device_angle_deg_locked(const uint16_t device_angle_deg, const b
     }
 
     LOG_INF("[device angle:%u][sin_val:%u][cos_val:%u]", tb_data.device_angle_deg, tb_data.sin_value, tb_data.cos_value);
+    return tb_data.device_angle_deg != previous_device_angle_deg;
+}
+
+static void raise_device_angle_changed(const uint16_t angle_deg) {
+    const int ret = raise_zmk_trackball_angle_changed(
+        (struct zmk_trackball_angle_changed){.angle_deg = angle_deg});
+    if (ret < 0) {
+        LOG_ERR("Failed to raise trackball angle changed event: %d", ret);
+    }
 }
 
 static void rotate_device_locked(const bool is_cw) {
@@ -277,14 +288,22 @@ void tb_init() {
 
 void tb_reset_device_angle() {
     k_mutex_lock(&tb_data_lock, K_FOREVER);
-    set_device_angle_deg_locked(tb_data.init_device_angle_deg, true);
+    const bool should_raise_event = set_device_angle_deg_locked(tb_data.init_device_angle_deg, true);
+    const uint16_t angle_deg = tb_data.device_angle_deg;
     k_mutex_unlock(&tb_data_lock);
+    if (should_raise_event) {
+        raise_device_angle_changed(angle_deg);
+    }
 }
 
 void tb_set_device_angle_deg(const uint16_t device_angle_deg) {
     k_mutex_lock(&tb_data_lock, K_FOREVER);
-    set_device_angle_deg_locked(device_angle_deg, false);
+    const bool should_raise_event = set_device_angle_deg_locked(device_angle_deg, false);
+    const uint16_t angle_deg = tb_data.device_angle_deg;
     k_mutex_unlock(&tb_data_lock);
+    if (should_raise_event) {
+        raise_device_angle_changed(angle_deg);
+    }
 }
 
 void tb_set_direction_detection_active(const bool is_active) {
@@ -349,6 +368,7 @@ int tb_rotate_point(const uint8_t type, const uint16_t code, int32_t* value) {
 
 void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) {
     k_mutex_lock(&tb_data_lock, K_FOREVER);
+    const uint16_t previous_device_angle_deg = tb_data.device_angle_deg;
     static int8_t acc_angle_deg = 0;
     static int64_t prev_time = 0;
     int64_t curr_time = k_uptime_get();
@@ -377,12 +397,23 @@ void tb_rotate_device_with_step(const uint8_t step_angle_deg, const bool is_cw) 
     acc_angle_deg %= tb_data.direction_angle_deg;
 
     LOG_DBG("rotate count:%d, remain acc angle[deg]: %d", rotate_count, acc_angle_deg);
+    const bool should_raise_event = tb_data.device_angle_deg != previous_device_angle_deg;
+    const uint16_t angle_deg = tb_data.device_angle_deg;
     k_mutex_unlock(&tb_data_lock);
+    if (should_raise_event) {
+        raise_device_angle_changed(angle_deg);
+    }
 }
 
 int tb_detect_direction(const uint8_t type, const uint16_t code, int32_t* value) {
     k_mutex_lock(&tb_data_lock, K_FOREVER);
+    const uint16_t previous_device_angle_deg = tb_data.device_angle_deg;
     const int result = detect_direction_locked(type, code, value);
+    const bool should_raise_event = tb_data.device_angle_deg != previous_device_angle_deg;
+    const uint16_t angle_deg = tb_data.device_angle_deg;
     k_mutex_unlock(&tb_data_lock);
+    if (should_raise_event) {
+        raise_device_angle_changed(angle_deg);
+    }
     return result;
 }
