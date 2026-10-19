@@ -18,7 +18,7 @@ LOG_MODULE_DECLARE(trackball_shift, CONFIG_TRACKBALL_SHIFT_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 #if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
-static const struct behavior_parameter_value_metadata metadata_sets[] = {};
+static const struct behavior_parameter_metadata_set metadata_sets[] = {};
 static const struct behavior_parameter_metadata metadata = {
     .sets_len = ARRAY_SIZE(metadata_sets),
     .sets = metadata_sets,
