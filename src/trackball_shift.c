@@ -45,7 +45,11 @@ static struct trackball_shift_data tb_data = {
     .device_angle_deg = 0,
     .sin_value = 0,
     .cos_value = 0,
+#if IS_ENABLED(CONFIG_ZMK_TRACKBALL_SHIFT_LAZY_LOAD)
     .is_lazy = CONFIG_ZMK_TRACKBALL_SHIFT_LAZY_LOAD,
+#else
+    .is_lazy = false,
+#endif
     .is_device_angle_changed = false,
     .is_detected = false,
     .is_detection_active = false,
